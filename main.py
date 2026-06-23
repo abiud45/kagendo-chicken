@@ -1,36 +1,34 @@
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, render_template, render_template_string, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
-from datetime import date
+from datetime import date, timedelta
 import os
+
+app = Flask(__name__)
+
+uri = os.environ.get("DATABASE_URL", "sqlite:///kagendo.db")
+
+if uri and uri.startswith("postgres://"):
+    uri = uri.replace("postgres://", "postgresql://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = uri
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db = SQLAlchemy(app)
 
 print("APP STARTING...")
 
 app = Flask(__name__, template_folder="templates")
 
 # DATABASE (Postgres or SQLite fallback)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
-    "DATABASE_URL",
-    "sqlite:///kagendo.db"
-)
-
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-db = SQLAlchemy(app)
-
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
-    "DATABASE_URL",
-    "sqlite:///kagendo.db"
-)
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-db = SQLAlchemy(app)
 uri = os.environ.get("DATABASE_URL", "sqlite:///kagendo.db")
 
 if uri.startswith("postgres://"):
     uri = uri.replace("postgres://", "postgresql://", 1)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = uri
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-
+db = SQLAlchemy(app)
 class Egg(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     quantity = db.Column(db.Integer, nullable=False)
@@ -50,14 +48,8 @@ class CrateSale(db.Model):
 class Sale(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     quantity = db.Column(db.Integer, nullable=False)
-    price_per_unit = db.Column(db.Float, nullable=False)
+    price = db.Column(db.Float, nullable=False)
     record_date = db.Column(db.Date, default=date.today, nullable=False)
-
-    @property
-    def total(self):
-        return self.quantity * self.price_per_unit
-
-
 
     @property
     def total(self):
@@ -77,8 +69,6 @@ class Feed(db.Model):
             return self.quantity * self.cost_per_unit
         return 0
 
-with app.app_context():
-    db.create_all()
 with app.app_context():
     db.create_all()
     print("DATABASE CREATED")
@@ -378,8 +368,9 @@ def dashboard():
         # WEEKLY ANALYTICS (last 7 days)
         today = date.today()
 
-        last_7_days = [(today.fromordinal(today.toordinal() - i)) for i in range(7)]
+        from datetime import timedelta
 
+        last_7_days = [(date.today() - timedelta(days=i)) for i in range(7)]
         weekly_eggs = []
         weekly_sales = []
 
