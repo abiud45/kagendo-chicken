@@ -1,6 +1,7 @@
 from flask import Flask, render_template, render_template_string, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date, timedelta
+from sqlalchemy import text
 import os
 
 app = Flask(__name__)
@@ -570,6 +571,17 @@ def delete_feed(id):
     db.session.delete(record)
     db.session.commit()
     return redirect(url_for("feeds"))
+
+@app.route("/fix-feed")
+def fix_feed():
+    try:
+        db.session.execute(
+            text("ALTER TABLE feed ADD COLUMN cost_per_unit FLOAT")
+        )
+        db.session.commit()
+        return "Feed table fixed!"
+    except Exception as e:
+        return str(e)
 
 
 @app.route("/sales", methods=["GET", "POST"])
