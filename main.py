@@ -317,6 +317,7 @@ BASE_TEMPLATE = """
     <a href="{{ url_for('eggs') }}">Eggs</a>
     <a href="{{ url_for('feeds') }}">Feeds</a>
     <a href="{{ url_for('sales') }}">Sales</a>
+    <a href="{{ url_for('inventory') }}">Inventory</a>
     <a href="{{ url_for('crate_sales') }}">Crate Sales</a>
 </nav>
 
@@ -344,34 +345,65 @@ def dashboard():
         eggs = Egg.query.all()
         feeds = Feed.query.all()
         sales = Sale.query.all()
-
-        total_eggs = sum(x.quantity for x in eggs)
-        individual_eggs_sold = sum(x.quantity for x in sales)
-
         crate_sales = CrateSale.query.all()
+
+        # EGG STATISTICS
+        total_eggs = sum(x.quantity for x in eggs)
+        eggs_today = sum(
+            x.quantity for x in eggs
+            if x.record_date == date.today()
+        )
+
+        individual_eggs_sold = sum(x.quantity for x in sales)
         crate_eggs_sold = sum(x.crates * 30 for x in crate_sales)
 
-        available_eggs = total_eggs - individual_eggs_sold - crate_eggs_sold
-        eggs_today = sum(x.quantity for x in eggs if x.record_date == date.today())
+        available_eggs = (
+            total_eggs
+            - individual_eggs_sold
+            - crate_eggs_sold
+        )
 
+        # FEED STATISTICS
         total_feed = sum(x.quantity for x in feeds)
         feed_cost = sum(x.total_cost for x in feeds)
 
-        revenue = sum(x.total for x in sales)
+        # REVENUE
+        revenue = (
+            sum(x.total for x in sales)
+            + sum(x.total for x in crate_sales)
+        )
+
         profit = revenue - feed_cost
 
-        # WEEKLY ANALYTICS (last 7 days)
-        today = date.today()
-
+        # WEEKLY ANALYTICS
         from datetime import timedelta
 
-        last_7_days = [(date.today() - timedelta(days=i)) for i in range(7)]
+        last_7_days = [
+            date.today() - timedelta(days=i)
+            for i in range(7)
+        ]
+
         weekly_eggs = []
         weekly_sales = []
 
         for d in last_7_days:
-            weekly_eggs.append(sum(x.quantity for x in eggs if x.record_date == d))
-            weekly_sales.append(sum(x.total for x in sales if x.record_date == d))
+            weekly_eggs.append(
+                sum(x.quantity for x in eggs if x.record_date == d)
+            )
+
+            daily_individual_sales = sum(
+                x.total for x in sales
+                if x.record_date == d
+            )
+
+            daily_crate_sales = sum(
+                x.total for x in crate_sales
+                if x.sale_date == d
+            )
+
+            weekly_sales.append(
+                daily_individual_sales + daily_crate_sales
+            )
 
         weekly_total_eggs = sum(weekly_eggs)
         weekly_total_sales = sum(weekly_sales)
@@ -383,14 +415,47 @@ def dashboard():
         "Dashboard",
         """
         <section class="cards">
-            <article class="card"><span>Eggs Today</span><strong>{{ eggs_today }}</strong></article>
+
             <article class="card">
-                <span>Eggs Remaining</span>
+                <span>Eggs Today</span>
+                <strong>{{ eggs_today }}</strong>
+            </article>
+
+            <article class="card">
+                <span>Eggs Collected</span>
+                <strong>{{ total_eggs }}</strong>
+            </article>
+
+            <article class="card">
+                <span>Individual Sales</span>
+                <strong>{{ individual_eggs_sold }}</strong>
+            </article>
+
+            <article class="card">
+                <span>Crate Sales</span>
+                <strong>{{ crate_eggs_sold }}</strong>
+            </article>
+
+            <article class="card">
+                <span>Eggs In Stock</span>
                 <strong>{{ available_eggs }}</strong>
             </article>
-            <article class="card"><span>Total Eggs</span><strong>{{ total_eggs }}</strong></article>
-            <article class="card"><span>Revenue</span><strong>KES {{ "%.0f"|format(revenue) }}</strong></article>
-            <article class="card"><span>Profit</span><strong>KES {{ "%.0f"|format(profit) }}</strong></article>
+
+            <article class="card">
+                <span>Revenue</span>
+                <strong>KES {{ "%.0f"|format(revenue) }}</strong>
+            </article>
+
+            <article class="card">
+                <span>Profit</span>
+                <strong>KES {{ "%.0f"|format(profit) }}</strong>
+            </article>
+
+            <article class="card">
+                <span>Feed Used (Kg)</span>
+                <strong>{{ "%.0f"|format(total_feed) }}</strong>
+            </article>
+
         </section>
 
         <section class="section">
@@ -398,10 +463,25 @@ def dashboard():
                 <h2>Weekly Summary</h2>
             </div>
 
-            <p><strong>Total Eggs (7 days):</strong> {{ weekly_total_eggs }}</p>
-            <p><strong>Total Sales (7 days):</strong> KES {{ "%.0f"|format(weekly_total_sales) }}</p>
-            <p><strong>Average Daily Eggs:</strong> {{ (weekly_total_eggs / 7) | round(1) }}</p>
-            <p><strong>Average Daily Sales:</strong> KES {{ "%.0f"|format(weekly_total_sales / 7) }}</p>
+            <p>
+                <strong>Total Eggs (7 days):</strong>
+                {{ weekly_total_eggs }}
+            </p>
+
+            <p>
+                <strong>Total Sales (7 days):</strong>
+                KES {{ "%.0f"|format(weekly_total_sales) }}
+            </p>
+
+            <p>
+                <strong>Average Daily Eggs:</strong>
+                {{ (weekly_total_eggs / 7) | round(1) }}
+            </p>
+
+            <p>
+                <strong>Average Daily Sales:</strong>
+                KES {{ "%.0f"|format(weekly_total_sales / 7) }}
+            </p>
         </section>
 
         <section class="section">
@@ -413,17 +493,20 @@ def dashboard():
                 <a href="{{ url_for('eggs') }}">Add Eggs</a>
                 <a href="{{ url_for('feeds') }}">Add Feed</a>
                 <a href="{{ url_for('sales') }}">Add Sale</a>
-                <a href="{{ url_for('dashboard') }}">Refresh</a>
+                <a href="{{ url_for('crate_sales') }}">Crate Sale</a>
             </div>
         </section>
         """,
         eggs_today=eggs_today,
         total_eggs=total_eggs,
+        individual_eggs_sold=individual_eggs_sold,
+        crate_eggs_sold=crate_eggs_sold,
+        available_eggs=available_eggs,
+        total_feed=total_feed,
         revenue=revenue,
         profit=profit,
         weekly_total_eggs=weekly_total_eggs,
         weekly_total_sales=weekly_total_sales,
-        available_eggs=available_eggs,
     )
 
 @app.route("/eggs", methods=["GET", "POST"])
@@ -580,6 +663,29 @@ def sales():
     if request.method == "POST":
         sale_id = request.form.get("id")
         sale = Sale.query.get(sale_id) if sale_id else Sale()
+        # Current stock
+
+        total_eggs = sum(x.quantity for x in Egg.query.all())
+
+        individual_eggs_sold = sum(
+            x.quantity for x in Sale.query.all()
+        )
+
+        crate_eggs_sold = sum(
+            x.crates * 30
+            for x in CrateSale.query.all()
+        )
+
+        available_eggs = (
+                total_eggs
+                - individual_eggs_sold
+                - crate_eggs_sold
+        )
+
+        requested_eggs = int(request.form["quantity"])
+
+        if requested_eggs > available_eggs:
+            return f"Not enough eggs in stock. Available: {available_eggs}"
         sale.quantity = int(request.form["quantity"])
         sale.price = float(request.form["price"])
         sale.record_date = parse_record_date()
@@ -663,7 +769,27 @@ def crate_sales():
         crate_id = request.form.get("id")
 
         sale = CrateSale.query.get(crate_id) if crate_id else CrateSale()
+        total_eggs = sum(x.quantity for x in Egg.query.all())
 
+        individual_eggs_sold = sum(
+            x.quantity for x in Sale.query.all()
+        )
+
+        crate_eggs_sold = sum(
+            x.crates * 30
+            for x in CrateSale.query.all()
+        )
+
+        available_eggs = (
+                total_eggs
+                - individual_eggs_sold
+                - crate_eggs_sold
+        )
+
+        requested_eggs = int(request.form["crates"]) * 30
+
+        if requested_eggs > available_eggs:
+            return f"Not enough eggs in stock. Available: {available_eggs}"
         sale.crates = int(request.form["crates"])
         sale.price_per_crate = float(request.form["price_per_crate"])
 
@@ -754,7 +880,64 @@ def crate_sales():
         edit_record=edit_record,
     )
 
+@app.route("/inventory")
+def inventory():
 
+    total_eggs = sum(x.quantity for x in Egg.query.all())
+
+    individual_eggs_sold = sum(
+        x.quantity for x in Sale.query.all()
+    )
+
+    crate_eggs_sold = sum(
+        x.crates * 30
+        for x in CrateSale.query.all()
+    )
+
+    eggs_in_stock = (
+        total_eggs
+        - individual_eggs_sold
+        - crate_eggs_sold
+    )
+
+    return page(
+        "Inventory",
+        """
+        <section class="section">
+
+            <h2>Egg Inventory</h2>
+
+            <div class="cards">
+
+                <article class="card">
+                    <span>Collected</span>
+                    <strong>{{ total_eggs }}</strong>
+                </article>
+
+                <article class="card">
+                    <span>Individual Sales</span>
+                    <strong>{{ individual_eggs_sold }}</strong>
+                </article>
+
+                <article class="card">
+                    <span>Crate Sales</span>
+                    <strong>{{ crate_eggs_sold }}</strong>
+                </article>
+
+                <article class="card">
+                    <span>In Stock</span>
+                    <strong>{{ eggs_in_stock }}</strong>
+                </article>
+
+            </div>
+
+        </section>
+        """,
+        total_eggs=total_eggs,
+        individual_eggs_sold=individual_eggs_sold,
+        crate_eggs_sold=crate_eggs_sold,
+        eggs_in_stock=eggs_in_stock,
+    )
 
 
 if __name__ == "__main__":
