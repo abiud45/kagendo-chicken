@@ -1,26 +1,10 @@
 from flask import Flask, render_template, render_template_string, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date, timedelta
-from sqlalchemy import text
 import os
-
-app = Flask(__name__)
-
-uri = os.environ.get("DATABASE_URL", "sqlite:///kagendo.db")
-
-if uri and uri.startswith("postgres://"):
-    uri = uri.replace("postgres://", "postgresql://", 1)
-
-app.config["SQLALCHEMY_DATABASE_URI"] = uri
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-db = SQLAlchemy(app)
-
-print("APP STARTING...")
 
 app = Flask(__name__, template_folder="templates")
 
-# DATABASE (Postgres or SQLite fallback)
 uri = os.environ.get("DATABASE_URL", "sqlite:///kagendo.db")
 
 if uri.startswith("postgres://"):
@@ -69,6 +53,19 @@ class Feed(db.Model):
         if self.cost_per_unit:
             return self.quantity * self.cost_per_unit
         return 0
+
+from sqlalchemy import text
+
+@app.route("/check-feed-columns")
+def check_feed_columns():
+    result = db.session.execute(text("""
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_name='feed'
+    """))
+
+    columns = [row[0] for row in result]
+    return "<br>".join(columns)
 
 with app.app_context():
     db.create_all()
@@ -572,17 +569,6 @@ def delete_feed(id):
     db.session.commit()
     return redirect(url_for("feeds"))
 
-@app.route("/fix-feed")
-def fix_feed():
-    try:
-        db.session.execute(
-            text("ALTER TABLE feed ADD COLUMN cost_per_unit FLOAT")
-        )
-        db.session.commit()
-        return "Feed table fixed!"
-    except Exception as e:
-        return str(e)
-
 
 @app.route("/sales", methods=["GET", "POST"])
 def sales():
@@ -657,6 +643,8 @@ def delete_sale(id):
     db.session.delete(record)
     db.session.commit()
     return redirect(url_for("sales"))
+
+
 
 
 if __name__ == "__main__":
