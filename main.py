@@ -55,7 +55,6 @@ class Feed(db.Model):
             return self.quantity * self.cost_per_unit
         return 0
 
-from sqlalchemy import text
 
 
 
@@ -313,12 +312,13 @@ BASE_TEMPLATE = """
     </header>
 
     <main class="app-shell">
-        <nav class="nav">
-            <a href="{{ url_for('dashboard') }}">Home</a>
-            <a href="{{ url_for('eggs') }}">Eggs</a>
-            <a href="{{ url_for('feeds') }}">Feeds</a>
-            <a href="{{ url_for('sales') }}">Sales</a>
-        </nav>
+      <nav class="nav">
+    <a href="{{ url_for('dashboard') }}">Home</a>
+    <a href="{{ url_for('eggs') }}">Eggs</a>
+    <a href="{{ url_for('feeds') }}">Feeds</a>
+    <a href="{{ url_for('sales') }}">Sales</a>
+    <a href="{{ url_for('crate_sales') }}">Crate Sales</a>
+</nav>
 
         {{ body|safe }}
     </main>
@@ -637,6 +637,57 @@ def delete_sale(id):
     db.session.delete(record)
     db.session.commit()
     return redirect(url_for("sales"))
+
+
+@app.route("/crate-sales", methods=["GET", "POST"])
+def crate_sales():
+    if request.method == "POST":
+        sale = CrateSale()
+        sale.crates = int(request.form["crates"])
+        sale.price_per_crate = float(request.form["price_per_crate"])
+        db.session.add(sale)
+        db.session.commit()
+        return redirect(url_for("crate_sales"))
+
+    rows = CrateSale.query.order_by(CrateSale.sale_date.desc()).all()
+
+    return page(
+        "Crate Sales",
+        """
+        <section class="section">
+            <h2>Sell Crates</h2>
+            <form method="post">
+                <label>Number of Crates
+                    <input name="crates" type="number" min="1" required>
+                </label>
+
+                <label>Price Per Crate
+                    <input name="price_per_crate" type="number" step="0.01" required>
+                </label>
+
+                <button class="save">Save Sale</button>
+            </form>
+        </section>
+
+        <section class="section">
+            <h2>Crate Sales Records</h2>
+
+            {% for r in rows %}
+            <div class="row">
+                <div>
+                    <strong>{{ r.crates }} Crates</strong>
+                    <small>
+                        {{ r.sale_date }} |
+                        {{ r.crates * 30 }} Eggs |
+                        KES {{ "%.2f"|format(r.total) }}
+                    </small>
+                </div>
+            </div>
+            {% endfor %}
+        </section>
+        """,
+        rows=rows,
+    )
 
 
 
