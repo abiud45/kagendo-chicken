@@ -346,6 +346,12 @@ def dashboard():
         sales = Sale.query.all()
 
         total_eggs = sum(x.quantity for x in eggs)
+        individual_eggs_sold = sum(x.quantity for x in sales)
+
+        crate_sales = CrateSale.query.all()
+        crate_eggs_sold = sum(x.crates * 30 for x in crate_sales)
+
+        available_eggs = total_eggs - individual_eggs_sold - crate_eggs_sold
         eggs_today = sum(x.quantity for x in eggs if x.record_date == date.today())
 
         total_feed = sum(x.quantity for x in feeds)
@@ -378,6 +384,10 @@ def dashboard():
         """
         <section class="cards">
             <article class="card"><span>Eggs Today</span><strong>{{ eggs_today }}</strong></article>
+            <article class="card">
+                <span>Eggs Remaining</span>
+                <strong>{{ available_eggs }}</strong>
+            </article>
             <article class="card"><span>Total Eggs</span><strong>{{ total_eggs }}</strong></article>
             <article class="card"><span>Revenue</span><strong>KES {{ "%.0f"|format(revenue) }}</strong></article>
             <article class="card"><span>Profit</span><strong>KES {{ "%.0f"|format(profit) }}</strong></article>
@@ -413,6 +423,7 @@ def dashboard():
         profit=profit,
         weekly_total_eggs=weekly_total_eggs,
         weekly_total_sales=weekly_total_sales,
+        available_eggs=available_eggs,
     )
 
 @app.route("/eggs", methods=["GET", "POST"])
@@ -638,34 +649,68 @@ def delete_sale(id):
     db.session.commit()
     return redirect(url_for("sales"))
 
+@app.route("/delete-crate-sale/<int:id>", methods=["POST"])
+def delete_crate_sale(id):
+    record = CrateSale.query.get_or_404(id)
+    db.session.delete(record)
+    db.session.commit()
+    return redirect(url_for("crate_sales"))
+
 
 @app.route("/crate-sales", methods=["GET", "POST"])
 def crate_sales():
     if request.method == "POST":
-        sale = CrateSale()
+        crate_id = request.form.get("id")
+
+        sale = CrateSale.query.get(crate_id) if crate_id else CrateSale()
+
         sale.crates = int(request.form["crates"])
         sale.price_per_crate = float(request.form["price_per_crate"])
+
         db.session.add(sale)
         db.session.commit()
+
         return redirect(url_for("crate_sales"))
 
-    rows = CrateSale.query.order_by(CrateSale.sale_date.desc()).all()
+    edit_id = request.args.get("edit", type=int)
+    edit_record = CrateSale.query.get(edit_id) if edit_id else None
+
+    rows = CrateSale.query.order_by(
+        CrateSale.sale_date.desc(),
+        CrateSale.id.desc()
+    ).all()
 
     return page(
         "Crate Sales",
         """
         <section class="section">
-            <h2>Sell Crates</h2>
+            <h2>{{ "Edit Crate Sale" if edit_record else "Sell Crates" }}</h2>
+
             <form method="post">
+
+                {% if edit_record %}
+                <input type="hidden" name="id" value="{{ edit_record.id }}">
+                {% endif %}
+
                 <label>Number of Crates
-                    <input name="crates" type="number" min="1" required>
+                    <input name="crates"
+                           type="number"
+                           min="1"
+                           required
+                           value="{{ edit_record.crates if edit_record else '' }}">
                 </label>
 
                 <label>Price Per Crate
-                    <input name="price_per_crate" type="number" step="0.01" required>
+                    <input name="price_per_crate"
+                           type="number"
+                           step="0.01"
+                           required
+                           value="{{ edit_record.price_per_crate if edit_record else '' }}">
                 </label>
 
-                <button class="save">Save Sale</button>
+                <button class="save">
+                    {{ "Update Sale" if edit_record else "Save Sale" }}
+                </button>
             </form>
         </section>
 
@@ -674,6 +719,7 @@ def crate_sales():
 
             {% for r in rows %}
             <div class="row">
+
                 <div>
                     <strong>{{ r.crates }} Crates</strong>
                     <small>
@@ -682,11 +728,30 @@ def crate_sales():
                         KES {{ "%.2f"|format(r.total) }}
                     </small>
                 </div>
+
+                <div class="actions">
+
+                    <a class="button edit"
+                       href="{{ url_for('crate_sales', edit=r.id) }}">
+                        Edit
+                    </a>
+
+                    <form method="post"
+                          action="{{ url_for('delete_crate_sale', id=r.id) }}">
+                        <button class="delete"
+                                onclick="return confirm('Delete this crate sale?')">
+                            Delete
+                        </button>
+                    </form>
+
+                </div>
+
             </div>
             {% endfor %}
         </section>
         """,
         rows=rows,
+        edit_record=edit_record,
     )
 
 
