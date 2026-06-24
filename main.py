@@ -341,12 +341,11 @@ def parse_record_date():
 
 
 def page(title, body, **context):
-    return render_template(
+    return render_template_string(
         BASE_TEMPLATE,
         title=title,
-        body=render_template(body, **context),
+        body=render_template_string(body, **context),
     )
-
 
 @app.route("/")
 def dashboard():
@@ -503,6 +502,7 @@ def feeds():
         feed = Feed.query.get(feed_id) if feed_id else Feed()
         feed.feed_type = request.form["feed_type"].strip()
         feed.quantity = float(request.form["quantity"])
+        feed.cost_per_unit = float(request.form.get("cost_per_unit", 0))
         feed.record_date = parse_record_date()
         db.session.add(feed)
         db.session.commit()
