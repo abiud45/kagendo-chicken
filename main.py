@@ -14,6 +14,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = uri
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
+
 class Egg(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     quantity = db.Column(db.Integer, nullable=False)
@@ -568,6 +569,14 @@ def delete_feed(id):
     db.session.delete(record)
     db.session.commit()
     return redirect(url_for("feeds"))
+
+@app.route("/test-feed")
+def test_feed():
+    try:
+        rows = Feed.query.all()
+        return f"Found {len(rows)} feed records"
+    except Exception as e:
+        return str(e)
 
 
 @app.route("/sales", methods=["GET", "POST"])
