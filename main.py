@@ -57,16 +57,7 @@ class Feed(db.Model):
 
 from sqlalchemy import text
 
-@app.route("/check-feed-columns")
-def check_feed_columns():
-    result = db.session.execute(text("""
-        SELECT column_name
-        FROM information_schema.columns
-        WHERE table_name='feed'
-    """))
 
-    columns = [row[0] for row in result]
-    return "<br>".join(columns)
 
 with app.app_context():
     db.create_all()
@@ -570,13 +561,7 @@ def delete_feed(id):
     db.session.commit()
     return redirect(url_for("feeds"))
 
-@app.route("/test-feed")
-def test_feed():
-    try:
-        rows = Feed.query.all()
-        return f"Found {len(rows)} feed records"
-    except Exception as e:
-        return str(e)
+
 
 
 @app.route("/sales", methods=["GET", "POST"])
