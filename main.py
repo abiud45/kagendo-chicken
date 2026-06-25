@@ -195,7 +195,23 @@ BASE_TEMPLATE = """
         .card:nth-child(2) { background: linear-gradient(135deg, #2563eb, #06b6d4); }
         .card:nth-child(3) { background: linear-gradient(135deg, #f97316, #facc15); color: #3f2f00; }
         .card:nth-child(4) { background: linear-gradient(135deg, #9333ea, #db2777); }
+        .card:nth-child(5) {
+    background: linear-gradient(135deg, #15803d, #22c55e);
+}
 
+.card:nth-child(6) {
+    background: linear-gradient(135deg, #0f766e, #06b6d4);
+}
+
+.card:nth-child(7) {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+}
+
+.card:nth-child(8) {
+    background: linear-gradient(135deg, #ea580c, #fb923c);
+}
+        
+        
         .card span {
             display: block;
             font-size: 13px;
