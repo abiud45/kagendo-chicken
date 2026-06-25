@@ -258,9 +258,53 @@ BASE_TEMPLATE = """
         }
 
         .button.save, button.save { background: var(--green); }
-        .button.edit { background: var(--blue); }
-        button.delete { background: var(--red); }
+       .button.edit,
+button.delete {
+    min-width: 38px;
+    min-height: 38px;
+    padding: 0;
+    font-size: 18px;
+}
+
+.button.edit,
+button.delete {
+    min-width: 38px;
+    min-height: 38px;
+    padding: 0;
+    font-size: 18px;
+    border-radius: 6px;
+}
+
+.button.edit,
+button.delete {
+    min-width: 55px;
+    min-height: 30px;
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 6px;
+    font-weight: 700;
+}
+
+.button.edit {
+    background: var(--blue);
+    color: white;
+}
+
+button.delete {
+    background: var(--red);
+    color: white;
+}
         .button.back { background: var(--muted); }
+        
+        .actions .button.edit,
+.actions button.delete {
+    width: 55px;
+    height: 30px;
+    min-width: 55px;
+    min-height: 30px;
+    padding: 4px 8px;
+    font-size: 12px;
+}
 
         .list {
             display: grid;
@@ -318,7 +362,8 @@ BASE_TEMPLATE = """
             .actions { justify-content: stretch; }
             .actions a, .actions button, .actions form { width: 100%; }
         }
-    </style>
+        
+         </style>
 </head>
 <body>
     <header class="topbar">
@@ -569,12 +614,20 @@ def eggs():
                         <strong>{{ r.quantity }} eggs</strong>
                         <small>{{ r.record_date }}</small>
                     </div>
-                    <div class="actions">
-                        <a class="button edit" href="{{ url_for('eggs', edit=r.id) }}">Edit</a>
-                        <form method="post" action="{{ url_for('delete_egg', id=r.id) }}">
-                            <button class="delete" onclick="return confirm('Delete this egg record?')">Delete</button>
-                        </form>
-                    </div>
+                  <div class="actions">
+    <a class="button edit"
+       href="{{ url_for('eggs', edit=r.id) }}">
+       Edit
+    </a>
+
+    <form method="post"
+          action="{{ url_for('delete_egg', id=r.id) }}">
+        <button type="submit" class="delete">
+            Del
+        </button>
+    </form>
+</div>
+
                 </article>
                 {% else %}
                 <p class="empty">No egg records yet.</p>
@@ -645,12 +698,19 @@ def feeds():
                         <strong>{{ r.feed_type }} - {{ "%.2f"|format(r.quantity) }} kg</strong>
                         <small>{{ r.record_date }}</small>
                     </div>
-                    <div class="actions">
-                        <a class="button edit" href="{{ url_for('feeds', edit=r.id) }}">Edit</a>
-                        <form method="post" action="{{ url_for('delete_feed', id=r.id) }}">
-                            <button class="delete" onclick="return confirm('Delete this feed record?')">Delete</button>
-                        </form>
-                    </div>
+                 <div class="actions">
+    <a class="button edit"
+       href="{{ url_for('feeds', edit=r.id) }}">
+       Edit
+    </a>
+
+    <form method="post"
+          action="{{ url_for('delete_feed', id=r.id) }}">
+        <button type="submit" class="delete">
+            Del
+        </button>
+    </form>
+</div>
                 </article>
                 {% else %}
                 <p class="empty">No feed records yet.</p>
@@ -745,12 +805,19 @@ def sales():
                         <strong>{{ r.quantity }} eggs x KES {{ "%.2f"|format(r.price) }}</strong>
                         <small>{{ r.record_date }} - Total KES {{ "%.2f"|format(r.total) }}</small>
                     </div>
-                    <div class="actions">
-                        <a class="button edit" href="{{ url_for('sales', edit=r.id) }}">Edit</a>
-                        <form method="post" action="{{ url_for('delete_sale', id=r.id) }}">
-                            <button class="delete" onclick="return confirm('Delete this sale?')">Delete</button>
-                        </form>
-                    </div>
+                   <div class="actions">
+    <a class="button edit"
+       href="{{ url_for('sales', edit=r.id) }}">
+       Edit
+    </a>
+
+    <form method="post"
+          action="{{ url_for('delete_sale', id=r.id) }}">
+        <button type="submit" class="delete">
+            Del
+        </button>
+    </form>
+</div>
                 </article>
                 {% else %}
                 <p class="empty">No sales records yet.</p>
@@ -871,23 +938,19 @@ def crate_sales():
                     </small>
                 </div>
 
-                <div class="actions">
+               <div class="actions">
+    <a class="button edit"
+       href="{{ url_for('crate_sales', edit=r.id) }}">
+       Edit
+    </a>
 
-                    <a class="button edit"
-                       href="{{ url_for('crate_sales', edit=r.id) }}">
-                        Edit
-                    </a>
-
-                    <form method="post"
-                          action="{{ url_for('delete_crate_sale', id=r.id) }}">
-                        <button class="delete"
-                                onclick="return confirm('Delete this crate sale?')">
-                            Delete
-                        </button>
-                    </form>
-
-                </div>
-
+    <form method="post"
+          action="{{ url_for('delete_crate_sale', id=r.id) }}">
+        <button type="submit" class="delete">
+            Del
+        </button>
+    </form>
+</div>
             </div>
             {% endfor %}
         </section>
