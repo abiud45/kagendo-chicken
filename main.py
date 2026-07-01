@@ -15,6 +15,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
+
 class Egg(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     quantity = db.Column(db.Integer, nullable=False)
@@ -31,6 +32,7 @@ class CrateSale(db.Model):
     def total(self):
         return self.crates * self.price_per_crate
 
+
 class Sale(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     quantity = db.Column(db.Integer, nullable=False)
@@ -46,347 +48,1095 @@ class Feed(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     feed_type = db.Column(db.String(100), nullable=False)
     quantity = db.Column(db.Float, nullable=False)
-    cost_per_unit = db.Column(db.Float, nullable=True)
-    record_date = db.Column(db.Date, default=date.today, nullable=False)
+    cost_per_unit = db.Column(db.Float, default=0)
+    record_date = db.Column(db.Date, default=date.today)
 
     @property
     def total_cost(self):
-        if self.cost_per_unit:
-            return self.quantity * self.cost_per_unit
-        return 0
+        return self.quantity * self.cost_per_unit
 
 
+class ChickBatch(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    batch_number = db.Column(db.String(20), unique=True, nullable=False)
+    breed = db.Column(db.String(100), nullable=False)
+    supplier = db.Column(db.String(100), nullable=False)
+
+    purchase_date = db.Column(db.Date, nullable=False)
+    expected_sale_date = db.Column(db.Date)
+
+    quantity = db.Column(db.Integer, nullable=False)
+    dead = db.Column(db.Integer, default=0)
+    sold = db.Column(db.Integer, default=0)
+
+    buying_price = db.Column(db.Float, nullable=False)
+
+    status = db.Column(db.String(20), default="Active")
+    notes = db.Column(db.Text)
+
+    @property
+    def total_cost(self):
+        return self.quantity * self.buying_price
+
+    @property
+    def alive(self):
+        return self.quantity - self.dead - self.sold
+
+    @property
+    def mortality_rate(self):
+        if self.quantity == 0:
+            return 0
+        return round((self.dead / self.quantity) * 100, 1)
 
 
 with app.app_context():
     db.create_all()
     print("DATABASE CREATED")
 
-
 BASE_TEMPLATE = """
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
     <title>{{ title }} | Kagendo Farm</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
     <style>
-        :root {
-            --green: #15803d;
-            --green-dark: #14532d;
-            --lime: #84cc16;
-            --yellow: #facc15;
-            --orange: #f97316;
-            --red: #dc2626;
-            --blue: #2563eb;
-            --ink: #172033;
-            --muted: #64748b;
-            --line: #dbe4ef;
-            --page: #f7faf3;
-            --card: #ffffff;
-        }
 
-        * { box-sizing: border-box; }
-
-        body {
-            margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
-            color: var(--ink);
-            background:
-                radial-gradient(circle at top left, rgba(250, 204, 21, .28), transparent 32rem),
-                linear-gradient(135deg, #ecfccb 0%, #eef8ff 48%, #fff7ed 100%);
-            min-height: 100vh;
-        }
-
-        .app-shell {
-            width: min(1040px, 100%);
-            margin: 0 auto;
-            padding: 16px;
-        }
-
-        .topbar {
-            background: linear-gradient(135deg, var(--green-dark), var(--green));
-            color: white;
-            border-radius: 0 0 22px 22px;
-            padding: 22px 18px 20px;
-            box-shadow: 0 12px 28px rgba(20, 83, 45, .24);
-        }
-
-        .topbar h1 {
-            margin: 0;
-            font-size: clamp(24px, 7vw, 38px);
-            letter-spacing: 0;
-        }
-
-        .topbar p {
-            margin: 8px 0 0;
-            color: #dcfce7;
-            font-size: 15px;
-        }
-
-        .nav {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            margin: 16px 0;
-        }
-
-        .nav a, .button, button {
-            border: 0;
-            border-radius: 8px;
-            color: white;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 44px;
-            padding: 10px 13px;
-            text-decoration: none;
-            font-size: 15px;
-            font-weight: 700;
-            line-height: 1.2;
-            touch-action: manipulation;
-            box-shadow: 0 8px 16px rgba(15, 23, 42, .12);
-        }
-
-        .nav a { background: var(--blue); }
-        .nav a:nth-child(2) { background: var(--yellow); color: #3f2f00; }
-        .nav a:nth-child(3) { background: var(--orange); }
-        .nav a:nth-child(4) { background: var(--green); }
-
-        .section {
-            background: rgba(255, 255, 255, .84);
-            border: 1px solid rgba(219, 228, 239, .78);
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 16px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 24px rgba(15, 23, 42, .08);
-        }
-
-        .section-title {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 14px;
-        }
-
-        h2 {
-            margin: 0;
-            font-size: 22px;
-        }
-
-        .cards {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-        }
-
-        .card {
-            border-radius: 8px;
-            padding: 16px;
-            min-height: 112px;
-            color: white;
-            box-shadow: 0 10px 18px rgba(15, 23, 42, .12);
-        }
-
-        .card:nth-child(1) { background: linear-gradient(135deg, #16a34a, #65a30d); }
-        .card:nth-child(2) { background: linear-gradient(135deg, #2563eb, #06b6d4); }
-        .card:nth-child(3) { background: linear-gradient(135deg, #f97316, #facc15); color: #3f2f00; }
-        .card:nth-child(4) { background: linear-gradient(135deg, #9333ea, #db2777); }
-        .card:nth-child(5) {
-    background: linear-gradient(135deg, #15803d, #22c55e);
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
 
-.card:nth-child(6) {
-    background: linear-gradient(135deg, #0f766e, #06b6d4);
+:root{
+
+    --primary:#2563eb;
+    --primary-dark:#1d4ed8;
+
+    --success:#22c55e;
+    --warning:#f59e0b;
+    --danger:#ef4444;
+
+    --sidebar:#0f172a;
+
+    --background:#f8fafc;
+
+    --card:#ffffff;
+
+    --border:#e2e8f0;
+
+    --text:#1e293b;
+
+    --muted:#64748b;
+
+    --radius:18px;
+
+    --shadow:
+        0 10px 25px rgba(15,23,42,.08);
+
 }
 
-.card:nth-child(7) {
-    background: linear-gradient(135deg, #7c3aed, #a855f7);
+body{
+
+    font-family:'Poppins',sans-serif;
+
+    background:var(--background);
+
+    color:var(--text);
+
 }
 
-.card:nth-child(8) {
-    background: linear-gradient(135deg, #ea580c, #fb923c);
-}
-        
-        
-        .card span {
-            display: block;
-            font-size: 13px;
-            font-weight: 700;
-            opacity: .9;
-        }
+/*************************************************
+LAYOUT
+**************************************************/
 
-        .card strong {
-            display: block;
-            margin-top: 14px;
-            font-size: clamp(26px, 8vw, 38px);
-            line-height: 1;
-        }
+.wrapper{
 
-        form {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            align-items: end;
-        }
+    display:flex;
 
-        label {
-            display: grid;
-            gap: 6px;
-            color: var(--muted);
-            font-size: 13px;
-            font-weight: 700;
-        }
+    min-height:100vh;
 
-        input {
-            width: 100%;
-            border: 1px solid var(--line);
-            border-radius: 8px;
-            min-height: 46px;
-            padding: 10px 12px;
-            color: var(--ink);
-            font: inherit;
-            background: white;
-        }
-
-        input:focus {
-            outline: 3px solid rgba(132, 204, 22, .32);
-            border-color: var(--green);
-        }
-
-        .button.save, button.save { background: var(--green); }
-       .button.edit,
-button.delete {
-    min-width: 38px;
-    min-height: 38px;
-    padding: 0;
-    font-size: 18px;
 }
 
-.button.edit,
-button.delete {
-    min-width: 38px;
-    min-height: 38px;
-    padding: 0;
-    font-size: 18px;
-    border-radius: 6px;
+.content{
+
+    flex:1;
+
+    display:flex;
+
+    flex-direction:column;
+
 }
 
-.button.edit,
-button.delete {
-    min-width: 55px;
-    min-height: 30px;
-    padding: 4px 8px;
-    font-size: 12px;
-    border-radius: 6px;
-    font-weight: 700;
+/*************************************************
+TOPBAR
+**************************************************/
+
+.topbar{
+
+    height:72px;
+
+    background:rgba(255,255,255,.75);
+
+    backdrop-filter:blur(12px);
+
+    -webkit-backdrop-filter:blur(12px);
+
+    border-bottom:1px solid rgba(255,255,255,.25);
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    padding:0 30px;
+
+    box-shadow:var(--shadow);
+
+    position:sticky;
+
+    top:0;
+
+    z-index:50;
+
 }
 
-.button.edit {
-    background: var(--blue);
-    color: white;
+.page-title{
+
+    font-size:24px;
+
+    font-weight:700;
+
 }
 
-button.delete {
-    background: var(--red);
-    color: white;
-}
-        .button.back { background: var(--muted); }
-        
-        .actions .button.edit,
-.actions button.delete {
-    width: 55px;
-    height: 30px;
-    min-width: 55px;
-    min-height: 30px;
-    padding: 4px 8px;
-    font-size: 12px;
+.top-actions{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:15px;
+
 }
 
-        .list {
-            display: grid;
-            gap: 10px;
-        }
+.search-box{
 
-        .row {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 12px;
-            align-items: center;
-            padding: 12px;
-            background: white;
-            border: 1px solid var(--line);
-            border-radius: 8px;
-        }
+    width:280px;
 
-        .row strong {
-            display: block;
-            font-size: 17px;
-        }
+}
 
-        .row small {
-            color: var(--muted);
-            display: block;
-            margin-top: 4px;
-        }
+.search-box input{
 
-        .actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-        }
+    width:100%;
 
-        .actions form {
-            display: block;
-        }
+    border:1px solid var(--border);
 
-        .empty {
-            color: var(--muted);
-            margin: 0;
-            padding: 14px;
-            border: 1px dashed var(--line);
-            border-radius: 8px;
-            background: white;
-        }
+    border-radius:12px;
 
-        @media (max-width: 760px) {
-            .app-shell { padding: 0 10px 18px; }
-            .nav { grid-template-columns: repeat(2, 1fr); }
-            .cards { grid-template-columns: repeat(2, 1fr); }
-            form { grid-template-columns: 1fr; }
-            .row { grid-template-columns: 1fr; }
-            .actions { justify-content: stretch; }
-            .actions a, .actions button, .actions form { width: 100%; }
-        }
-        
-         </style>
+    padding:10px 14px;
+
+    font-size:14px;
+
+}
+
+/*************************************************
+CONTENT
+**************************************************/
+
+/*************************************************
+CONTENT
+**************************************************/
+
+.page{
+
+    padding:25px;
+
+    animation:fade .35s ease;
+
+}
+
+@keyframes fade{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(15px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+
+.section{
+
+    background:white;
+
+    border-radius:var(--radius);
+
+    box-shadow:var(--shadow);
+
+    padding:20px;
+
+    margin-bottom:25px;
+
+}
+
+/*************************************************
+CARDS
+**************************************************/
+
+.cards{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(auto-fit,minmax(220px,1fr));
+
+    gap:20px;
+
+}
+
+.card{
+
+    border-radius:18px;
+
+    color:white;
+
+    padding:20px;
+
+   min-height:180px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:space-between;
+
+    overflow:hidden;
+
+    transition:.35s ease;
+
+    cursor:pointer;
+
+}
+
+.card:hover{
+
+    transform:translateY(-10px);
+
+    box-shadow:0 25px 45px rgba(0,0,0,.15);
+
+}
+
+.card-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+}
+
+.card-header span{
+    font-size:15px;
+    font-weight:600;
+}
+
+.card-header small{
+    background:rgba(255,255,255,.25);
+    padding:4px 10px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:500;
+}
+
+.card strong{
+    display:block;
+    margin:20px 0 12px;
+    font-size:34px;
+    font-weight:700;
+}
+
+.card-footer{
+    font-size:13px;
+    opacity:.9;
+}
+
+.card.green{
+    background:linear-gradient(135deg,#16a34a,#22c55e);
+}
+
+.card.blue{
+    background:linear-gradient(135deg,#2563eb,#38bdf8);
+}
+
+.card.purple{
+    background:linear-gradient(135deg,#9333ea,#c026d3);
+}
+
+.card.orange{
+    background:linear-gradient(135deg,#f97316,#fb923c);
+}
+
+.summary-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:15px;
+    margin-top:15px;
+}
+
+.summary-box{
+    display:flex;
+    align-items:center;
+    gap:15px;
+    background:#fff;
+    border:1px solid #e5e7eb;
+    border-radius:14px;
+    padding:16px;
+    transition:.25s;
+}
+
+.summary-box:hover{
+    transform:translateY(-3px);
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+}
+
+.summary-icon{
+    width:52px;
+    height:52px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    background:#f3f4f6;
+}
+
+.summary-box h4{
+    margin:0;
+    font-size:16px;
+    color:#1f2937;
+}
+
+.summary-box p{
+    margin:6px 0 2px;
+    font-size:15px;
+}
+
+.summary-box small{
+    color:#6b7280;
+}
+
+
+
+/*************************************************
+BUTTONS
+**************************************************/
+
+.button,
+button{
+
+background:var(--primary);
+
+color:white;
+
+border:none;
+
+padding:10px 18px;
+
+border-radius:12px;
+
+cursor:pointer;
+
+font-weight:600;
+
+text-decoration:none;
+
+transition:.25s;
+
+position:relative;
+
+overflow:hidden;
+
+}
+
+.button::before,
+button::before{
+
+content:"";
+
+position:absolute;
+
+width:0;
+
+height:0;
+
+background:rgba(255,255,255,.25);
+
+border-radius:50%;
+
+left:50%;
+
+top:50%;
+
+transform:translate(-50%,-50%);
+
+transition:.5s;
+
+}
+
+.button:hover::before,
+button:hover::before{
+
+width:300px;
+
+height:300px;
+
+}
+
+.button:hover,
+button:hover{
+
+transform:translateY(-2px);
+
+}
+
+.button.save{
+
+background:var(--success);
+
+}
+
+.button.back{
+
+background:var(--muted);
+
+}
+
+.button.edit{
+
+background:var(--primary);
+
+}
+
+button.delete{
+
+background:var(--danger);
+
+}
+
+.notification-container{
+
+    position:relative;
+
+}
+
+.notification-btn{
+
+    position:relative;
+
+    font-size:22px;
+
+    background:white;
+
+    border:none;
+
+    cursor:pointer;
+
+}
+
+#notification-count{
+
+    position:absolute;
+
+    top:-6px;
+
+    right:-6px;
+
+    background:#ef4444;
+
+    color:white;
+
+    border-radius:50%;
+
+    width:20px;
+
+    height:20px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:12px;
+
+}
+
+.notification-dropdown{
+
+    display:none;
+
+    position:absolute;
+
+    right:0;
+
+    top:45px;
+
+    width:320px;
+
+    background:white;
+
+    border-radius:12px;
+
+    box-shadow:0 15px 35px rgba(0,0,0,.15);
+
+    z-index:999;
+
+    overflow:hidden;
+
+}
+
+.notification-item{
+
+    padding:14px;
+
+    border-bottom:1px solid #eee;
+
+    cursor:pointer;
+
+}
+
+.notification-item:hover{
+
+    background:#f5f5f5;
+
+}
+
+.notification-dropdown.show{
+
+    display:block;
+
+}
+
+
+/*************************************************
+FORMS
+**************************************************/
+
+form{
+
+display:grid;
+
+grid-template-columns:
+repeat(auto-fit,minmax(220px,1fr));
+
+gap:15px;
+
+}
+
+label{
+
+display:flex;
+
+flex-direction:column;
+
+gap:8px;
+
+font-weight:600;
+
+font-size:14px;
+
+}
+
+input{
+
+padding:12px;
+
+border:1px solid var(--border);
+
+border-radius:12px;
+
+font-size:14px;
+
+}
+
+/*************************************************
+FLOATING ACTION BUTTON
+**************************************************/
+
+.fab{
+
+    position:fixed;
+
+    bottom:30px;
+
+    right:30px;
+
+    width:65px;
+
+    height:65px;
+
+    border-radius:50%;
+
+    background:linear-gradient(135deg,#2563eb,#38bdf8);
+
+    color:white;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:34px;
+
+    text-decoration:none;
+
+    box-shadow:0 15px 35px rgba(37,99,235,.35);
+
+    z-index:999;
+
+    transition:.3s;
+
+}
+
+.fab:hover{
+
+    transform:scale(1.12) rotate(90deg);
+
+}
+
+
+/*************************************************
+ROWS
+**************************************************/
+
+.row{
+
+background:white;
+
+border-radius:14px;
+
+padding:16px;
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+margin-bottom:12px;
+
+box-shadow:var(--shadow);
+
+}
+
+.actions{
+
+display:flex;
+
+gap:10px;
+
+}
+
+/*************************************************
+MOBILE
+**************************************************/
+
+@media(max-width:768px){
+
+.topbar{
+
+padding:15px;
+
+flex-direction:column;
+
+height:auto;
+
+gap:15px;
+
+}
+
+/*************************************************
+SIDEBAR
+**************************************************/
+
+.menu-btn{
+    background:none;
+    border:none;
+    font-size:28px;
+    color:#0f172a;
+    cursor:pointer;
+    margin-right:20px;
+}
+
+.sidebar{
+
+    width:260px;
+    background:#0f172a;
+    color:white;
+    padding:25px;
+    display:flex;
+    flex-direction:column;
+
+    transition:0.3s;
+    overflow:hidden;
+
+}
+
+.sidebar.collapsed{
+
+    width:75px;
+
+}
+
+.sidebar.collapsed h2,
+.sidebar.collapsed small{
+
+    display:none;
+
+}
+
+.sidebar.collapsed a{
+
+    text-align:center;
+    padding:16px 0;
+
+}
+
+.content{
+
+    transition:0.3s;
+
+}
+
+.logo{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:15px;
+
+    margin-bottom:40px;
+
+}
+
+.logo h2{
+
+    margin:0;
+
+    font-size:24px;
+
+}
+
+.logo small{
+
+    color:#94a3b8;
+
+}
+
+.sidebar-menu{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:10px;
+
+}
+
+.sidebar-menu a{
+
+    color:#cbd5e1;
+
+    text-decoration:none;
+
+    padding:14px 18px;
+
+    border-radius:12px;
+
+    font-weight:600;
+
+    transition:.25s;
+
+}
+
+.sidebar-menu a:hover{
+
+    background:#1e293b;
+
+    color:white;
+
+}
+
+.sidebar-menu a.active{
+
+    background:#2563eb;
+
+    color:white;
+
+}
+
+.search-box{
+
+width:100%;
+
+}
+
+.page{
+
+padding:15px;
+
+}
+
+.cards{
+
+grid-template-columns:1fr;
+
+}
+
+.row{
+
+flex-direction:column;
+
+align-items:flex-start;
+
+gap:15px;
+
+}
+
+.actions{
+
+width:100%;
+
+}
+
+.actions a,
+.actions form,
+.actions button{
+
+width:100%;
+
+}
+
+}
+
+    </style>
+
 </head>
-<body>
-    <header class="topbar">
-        <div class="app-shell">
-            <h1>Kagendo Farm</h1>
-        </div>
-    </header>
 
-    <main class="app-shell">
-      <nav class="nav">
-    <a href="{{ url_for('dashboard') }}">Home</a>
-    <a href="{{ url_for('eggs') }}">Eggs</a>
-    <a href="{{ url_for('feeds') }}">Feeds</a>
-    <a href="{{ url_for('sales') }}">Sales</a>
-    <a href="{{ url_for('inventory') }}">Inventory</a>
-    <a href="{{ url_for('crate_sales') }}">Crate Sales</a>
+<body>
+<div class="wrapper">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+
+        <div class="logo">
+            🐔
+            <div>
+                <h2>Kagendo</h2>
+                <small>Farm Manager</small>
+            </div>
+        </div>
+
+      <nav class="sidebar-menu">
+
+    <a href="{{ url_for('dashboard') }}" class="{% if title == 'Dashboard' %}active{% endif %}">
+        🏠 Dashboard
+    </a>
+
+    <a href="{{ url_for('eggs') }}" class="{% if title == 'Eggs' %}active{% endif %}">
+        🥚 Eggs
+    </a>
+
+    <a href="{{ url_for('chicks') }}" class="{% if title == 'Chick Management' %}active{% endif %}">
+        🐥 Chick Management
+    </a>
+
+    <a href="{{ url_for('feeds') }}" class="{% if title == 'Feeds' %}active{% endif %}">
+        🌾 Feed
+    </a>
+
+    <a href="{{ url_for('sales') }}" class="{% if title == 'Sales' %}active{% endif %}">
+        💰 Sales
+    </a>
+
+    <a href="{{ url_for('inventory') }}" class="{% if title == 'Inventory' %}active{% endif %}">
+        📦 Inventory
+    </a>
+
+    <a href="{{ url_for('crate_sales') }}" class="{% if title == 'Crate Sales' %}active{% endif %}">
+        📋 Crate Sales
+    </a>
+
 </nav>
 
-        {{ body|safe }}
-    </main>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="content">
+
+       <header class="topbar">
+
+    <button id="menu-toggle" class="menu-btn">
+        ☰
+    </button>
+
+    <div>
+        <div class="page-title">
+            {{ title }}
+        </div>
+
+        <small style="color:#64748b;">
+            Welcome to Kagendo Farm Management System
+        </small>
+    </div>
+
+    ...
+</header>
+
+            <div class="top-actions">
+
+                <div class="search-box">
+                    <input
+                        type="text"
+                        placeholder="Search..."
+                    >
+                </div>
+
+            <div class="notification-container">
+
+    <button id="notification-btn" class="notification-btn">
+
+        🔔
+
+        <span id="notification-count">
+            {{ notification_count }}
+        </span>
+
+    </button>
+
+    <div id="notification-dropdown" class="notification-dropdown">
+
+        {% if notifications %}
+
+            {% for note in notifications %}
+
+                <div class="notification-item">
+
+                    {{ note }}
+
+                </div>
+
+            {% endfor %}
+
+        {% else %}
+
+            <div class="notification-item">
+
+                No notifications 🎉
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+              
+                <button title="Profile">
+                    👤
+                </button>
+
+            </div>
+
+        </header>
+
+        <main class="page">
+
+            {{ body|safe }}
+
+        </main>
+
+    </div>
+
+</div>
+
+<script>
+
+const sidebar = document.getElementById("sidebar");
+const toggle = document.getElementById("menu-toggle");
+
+toggle.addEventListener("click", () => {
+    sidebar.classList.toggle("collapsed");
+});
+
+</script>
+
+</body>
+
+</main>
+
+    </div>
+
+</div>
+
+<script>
+
+const bell = document.getElementById("notification-btn");
+const dropdown = document.getElementById("notification-dropdown");
+
+if (bell && dropdown) {
+
+    bell.addEventListener("click", function(e) {
+
+        e.stopPropagation();
+
+        dropdown.classList.toggle("show");
+
+    });
+
+    document.addEventListener("click", function() {
+
+        dropdown.classList.remove("show");
+
+    });
+
+}
+
+</script>
+
+<a href="{{ url_for('dashboard') }}" class="fab">
+
+    +
+
+</a>
+
 </body>
 </html>
 """
+
 
 def parse_record_date():
     value = request.form.get("record_date") or str(date.today())
@@ -394,10 +1144,31 @@ def parse_record_date():
 
 
 def page(title, body, **context):
+
+    notifications = []
+
+    # No eggs recorded today
+    eggs_today = Egg.query.filter_by(record_date=date.today()).count()
+
+    if eggs_today == 0:
+        notifications.append("🥚 No egg collection recorded today.")
+
+    # Low feed stock
+    total_feed = sum(feed.quantity for feed in Feed.query.all())
+
+    if total_feed < 100:
+        notifications.append(
+            f"🌾 Feed stock is low ({total_feed:.1f} kg)."
+        )
+
+    notification_count = len(notifications)
+
     return render_template_string(
         BASE_TEMPLATE,
         title=title,
         body=render_template_string(body, **context),
+        notifications=notifications,
+        notification_count=notification_count,
     )
 
 @app.route("/")
@@ -419,9 +1190,9 @@ def dashboard():
         crate_eggs_sold = sum(x.crates * 30 for x in crate_sales)
 
         available_eggs = (
-            total_eggs
-            - individual_eggs_sold
-            - crate_eggs_sold
+                total_eggs
+                - individual_eggs_sold
+                - crate_eggs_sold
         )
 
         # FEED STATISTICS
@@ -430,8 +1201,8 @@ def dashboard():
 
         # REVENUE
         revenue = (
-            sum(x.total for x in sales)
-            + sum(x.total for x in crate_sales)
+                sum(x.total for x in sales)
+                + sum(x.total for x in crate_sales)
         )
 
         profit = revenue - feed_cost
@@ -475,88 +1246,165 @@ def dashboard():
     return page(
         "Dashboard",
         """
-        <section class="cards">
+   <section class="section">
 
-            <article class="card">
-                <span>Eggs Today</span>
-                <strong>{{ eggs_today }}</strong>
-            </article>
+    <div class="section-title">
+        <div>
+            <h2>Welcome Back 👋</h2>
+            <p style="color:#64748b;margin-top:8px;">
+                Here's what's happening on your farm today.
+            </p>
+        </div>
 
-            <article class="card">
-                <span>Eggs Collected</span>
-                <strong>{{ total_eggs }}</strong>
-            </article>
+        <div style="color:#64748b;">
+            {{ eggs_today }} eggs collected today
+        </div>
+    </div>
 
-            <article class="card">
-                <span>Individual Sales</span>
-                <strong>{{ individual_eggs_sold }}</strong>
-            </article>
+</section>
 
-            <article class="card">
-                <span>Crate Sales</span>
-                <strong>{{ crate_eggs_sold }}</strong>
-            </article>
 
-            <article class="card">
-                <span>Eggs In Stock</span>
-                <strong>{{ available_eggs }}</strong>
-            </article>
+<section class="cards">
 
-            <article class="card">
-                <span>Revenue</span>
-                <strong>KES {{ "%.0f"|format(revenue) }}</strong>
-            </article>
+    <article class="card green">
+        <div class="card-header">
+            <span>🥚 Eggs In Stock</span>
+            <small>Available</small>
+        </div>
 
-            <article class="card">
-                <span>Profit</span>
-                <strong>KES {{ "%.0f"|format(profit) }}</strong>
-            </article>
+        <strong>{{ available_eggs }}</strong>
 
-            <article class="card">
-                <span>Feed Used (Kg)</span>
-                <strong>{{ "%.0f"|format(total_feed) }}</strong>
-            </article>
+        <div class="card-footer">
+            Total Collected: {{ total_eggs }}
+        </div>
+    </article>
 
-        </section>
+    <article class="card blue">
+        <div class="card-header">
+            <span>💰 Revenue</span>
+            <small>Total Sales</small>
+        </div>
 
-        <section class="section">
-            <div class="section-title">
-                <h2>Weekly Summary</h2>
+        <strong>KES {{ "{:,.0f}".format(revenue) }}</strong>
+
+        <div class="card-footer">
+            Individual + Crate Sales
+        </div>
+    </article>
+
+    <article class="card purple">
+        <div class="card-header">
+            <span>📈 Profit</span>
+            <small>Estimated</small>
+        </div>
+
+        <strong>KES {{ "{:,.0f}".format(profit) }}</strong>
+
+        <div class="card-footer">
+            Revenue - Expenses
+        </div>
+    </article>
+
+    <article class="card orange">
+        <div class="card-header">
+            <span>🌾 Feed Stock</span>
+            <small>Available</small>
+        </div>
+
+        <strong>{{ "%.0f"|format(total_feed) }} kg</strong>
+
+        <div class="card-footer">
+            Monitor Feed Levels
+        </div>
+    </article>
+
+</section>
+
+
+<section class="section">
+
+    <div class="section-title">
+
+        <h2>⚡ Quick Actions</h2>
+
+    </div>
+
+    <div class="cards">
+
+        <a class="button save"
+           href="{{ url_for('eggs') }}">
+           ➕ Add Eggs
+        </a>
+
+        <a class="button"
+           href="{{ url_for('feeds') }}">
+           🌾 Add Feed
+        </a>
+
+        <a class="button"
+           href="{{ url_for('sales') }}">
+           💰 Record Sale
+        </a>
+
+        <a class="button"
+           href="{{ url_for('crate_sales') }}">
+           📦 Crate Sale
+        </a>
+
+    </div>
+
+</section>
+
+
+<section class="section">
+
+    <div class="section-title">
+        <h2>📌 Farm Summary</h2>
+    </div>
+
+    <div class="summary-grid">
+
+        <div class="summary-box">
+            <div class="summary-icon">🥚</div>
+            <div>
+                <h4>Eggs</h4>
+                <p><strong>{{ total_eggs }}</strong> Collected</p>
+                <small>{{ available_eggs }} Available</small>
             </div>
+        </div>
 
-            <p>
-                <strong>Total Eggs (7 days):</strong>
-                {{ weekly_total_eggs }}
-            </p>
-
-            <p>
-                <strong>Total Sales (7 days):</strong>
-                KES {{ "%.0f"|format(weekly_total_sales) }}
-            </p>
-
-            <p>
-                <strong>Average Daily Eggs:</strong>
-                {{ (weekly_total_eggs / 7) | round(1) }}
-            </p>
-
-            <p>
-                <strong>Average Daily Sales:</strong>
-                KES {{ "%.0f"|format(weekly_total_sales / 7) }}
-            </p>
-        </section>
-
-        <section class="section">
-            <div class="section-title">
-                <h2>Quick Actions</h2>
+        <div class="summary-box">
+            <div class="summary-icon">🌾</div>
+            <div>
+                <h4>Feed</h4>
+                <p><strong>{{ "%.0f"|format(total_feed) }} kg</strong></p>
+                <small>Stock Healthy</small>
             </div>
+        </div>
 
-            <div class="nav">
-                <a href="{{ url_for('eggs') }}">Add Eggs</a>
-                <a href="{{ url_for('feeds') }}">Add Feed</a>
-                <a href="{{ url_for('sales') }}">Add Sale</a>
-                <a href="{{ url_for('crate_sales') }}">Crate Sale</a>
+        <div class="summary-box">
+            <div class="summary-icon">💰</div>
+            <div>
+                <h4>Revenue</h4>
+                <p><strong>KES {{ "%.0f"|format(revenue) }}</strong></p>
+                <small>Total Sales</small>
             </div>
-        </section>
+        </div>
+
+        <div class="summary-box">
+            <div class="summary-icon">📈</div>
+            <div>
+                <h4>Profit</h4>
+                <p><strong>KES {{ "%.0f"|format(profit) }}</strong></p>
+                <small>Estimated</small>
+            </div>
+        </div>
+
+    </div>
+
+</section>
+
+</section>
         """,
         eggs_today=eggs_today,
         total_eggs=total_eggs,
@@ -569,6 +1417,7 @@ def dashboard():
         weekly_total_eggs=weekly_total_eggs,
         weekly_total_sales=weekly_total_sales,
     )
+
 
 @app.route("/eggs", methods=["GET", "POST"])
 def eggs():
@@ -732,8 +1581,6 @@ def delete_feed(id):
     return redirect(url_for("feeds"))
 
 
-
-
 @app.route("/sales", methods=["GET", "POST"])
 def sales():
     if request.method == "POST":
@@ -837,6 +1684,7 @@ def delete_sale(id):
     db.session.delete(record)
     db.session.commit()
     return redirect(url_for("sales"))
+
 
 @app.route("/delete-crate-sale/<int:id>", methods=["POST"])
 def delete_crate_sale(id):
@@ -959,9 +1807,9 @@ def crate_sales():
         edit_record=edit_record,
     )
 
+
 @app.route("/inventory")
 def inventory():
-
     total_eggs = sum(x.quantity for x in Egg.query.all())
 
     individual_eggs_sold = sum(
@@ -974,9 +1822,9 @@ def inventory():
     )
 
     eggs_in_stock = (
-        total_eggs
-        - individual_eggs_sold
-        - crate_eggs_sold
+            total_eggs
+            - individual_eggs_sold
+            - crate_eggs_sold
     )
 
     return page(
@@ -1016,6 +1864,411 @@ def inventory():
         individual_eggs_sold=individual_eggs_sold,
         crate_eggs_sold=crate_eggs_sold,
         eggs_in_stock=eggs_in_stock,
+    )
+
+
+@app.route("/chicks")
+def chicks():
+    search = request.args.get("search", "")
+
+    status = request.args.get("status", "")
+
+    query = ChickBatch.query
+
+    if search:
+        query = query.filter(
+            db.or_(
+                ChickBatch.batch_number.contains(search),
+                ChickBatch.breed.contains(search),
+                ChickBatch.supplier.contains(search)
+            )
+        )
+
+    if status:
+        query = query.filter(
+            ChickBatch.status == status
+        )
+
+    batches = query.order_by(
+        ChickBatch.purchase_date.desc()
+    ).all()
+
+    total = sum(x.quantity for x in batches)
+
+    alive = sum(x.alive for x in batches)
+
+    dead = sum(x.dead for x in batches)
+
+    sold = sum(x.sold for x in batches)
+
+    body = f"""
+    <h2>🐣 Chick Management</h2>
+
+    <form method="GET" style="margin:20px 0;display:flex;gap:10px;flex-wrap:wrap;">
+
+<input
+type="text"
+name="search"
+placeholder="Search batch...">
+
+<select name="status">
+
+<option value="">All Status</option>
+
+<option value="Active">Active</option>
+
+<option value="Closed">Closed</option>
+
+<option value="Sold">Sold</option>
+
+</select>
+
+<button class="btn btn-primary">
+
+🔍 Search
+
+</button>
+
+</form>
+
+    <a href="/add_chick" class="btn btn-primary">+ Add New Batch</a>
+
+    <div class="card-grid">
+    """
+
+    for b in batches:
+        body += f"""
+        <div class="card">
+
+            <h3>🐣 Batch {b.batch_number}</h3>
+
+            <p><b>Breed:</b> {b.breed}</p>
+
+            <p><b>Supplier:</b> {b.supplier}</p>
+
+            <p><b>Purchase Date:</b> {b.purchase_date}</p>
+
+            <p>🐥 Total Birds: {b.quantity}</p>
+
+            <p>💀 Dead: {b.dead}</p>
+
+            <p>💰 Sold: {b.sold}</p>
+
+            <p>🟢 Alive: {b.alive}</p>
+
+            <p><b>Status:</b> {b.status}</p>
+
+            <div style="margin-top:15px; display:flex; gap:10px; flex-wrap:wrap;">
+
+                <a href="/edit_chick/{b.id}"
+                   style="background:#f59e0b;
+                          color:white;
+                          padding:10px 16px;
+                          border-radius:10px;
+                          text-decoration:none;
+                          font-weight:600;">
+                    ✏ Edit
+                </a>
+
+                <a href="/delete_chick/{b.id}"
+                   onclick="return confirm('Delete this batch?')"
+                   style="background:#ef4444;
+                          color:white;
+                          padding:10px 16px;
+                          border-radius:10px;
+                          text-decoration:none;
+                          font-weight:600;">
+                    🗑 Delete
+                </a>
+
+            </div>
+
+        </div>
+        """
+
+    body += "</div>"
+
+    return page("Chicks", body)
+
+
+@app.route("/edit_chick/<int:id>", methods=["GET", "POST"])
+def edit_chick(id):
+    batch = ChickBatch.query.get_or_404(id)
+
+    if request.method == "POST":
+
+        batch.batch_number = request.form["batch_number"]
+        batch.breed = request.form["breed"]
+        batch.supplier = request.form["supplier"]
+
+        batch.purchase_date = date.fromisoformat(
+            request.form["purchase_date"]
+        )
+
+        if request.form["expected_sale_date"]:
+            batch.expected_sale_date = date.fromisoformat(
+                request.form["expected_sale_date"]
+            )
+        else:
+            batch.expected_sale_date = None
+
+        batch.quantity = int(request.form["quantity"])
+        batch.buying_price = float(request.form["buying_price"])
+        batch.status = request.form["status"]
+        batch.notes = request.form["notes"]
+
+        db.session.commit()
+
+        return redirect(url_for("chicks"))
+
+    expected_date = ""
+
+    if batch.expected_sale_date:
+        expected_date = batch.expected_sale_date.isoformat()
+
+    body = f"""
+
+<h2>✏ Edit Chick Batch</h2>
+
+<form method="POST">
+
+<label>Batch Number</label>
+
+<input
+type="text"
+name="batch_number"
+value="{batch.batch_number}"
+required>
+
+<label>Breed</label>
+
+<input
+type="text"
+name="breed"
+value="{batch.breed}"
+required>
+
+<label>Supplier</label>
+
+<input
+type="text"
+name="supplier"
+value="{batch.supplier}"
+required>
+
+<label>Purchase Date</label>
+
+<input
+type="date"
+name="purchase_date"
+value="{batch.purchase_date.isoformat()}"
+required>
+
+<label>Expected Sale Date</label>
+
+<input
+type="date"
+name="expected_sale_date"
+value="{expected_date}">
+
+<label>Total Birds</label>
+
+<input
+type="number"
+name="quantity"
+value="{batch.quantity}"
+required>
+
+<label>Buying Price Per Bird</label>
+
+<input
+type="number"
+step="0.01"
+name="buying_price"
+value="{batch.buying_price}"
+required>
+
+<label>Status</label>
+
+<select name="status">
+
+<option {"selected" if batch.status == "Active" else ""}>Active</option>
+
+<option {"selected" if batch.status == "Sold" else ""}>Sold</option>
+
+<option {"selected" if batch.status == "Closed" else ""}>Closed</option>
+
+</select>
+
+<label>Notes</label>
+
+<textarea
+name="notes"
+rows="5">{batch.notes or ""}</textarea>
+
+<br><br>
+
+<button class="btn btn-primary">
+
+💾 Save Changes
+
+</button>
+
+<a href="/chicks" class="btn">
+
+Cancel
+
+</a>
+
+</form>
+
+"""
+
+    return page("Edit Chick Batch", body)
+
+
+@app.route("/add_chick", methods=["GET", "POST"])
+def add_chick():
+    if request.method == "POST":
+        batch = ChickBatch(
+            batch_number=request.form["batch_number"],
+            breed=request.form["breed"],
+            supplier=request.form["supplier"],
+            purchase_date=date.fromisoformat(request.form["purchase_date"]),
+            expected_sale_date=date.fromisoformat(request.form["expected_sale_date"])
+            if request.form["expected_sale_date"] else None,
+            quantity=int(request.form["quantity"]),
+            buying_price=float(request.form["buying_price"]),
+            notes=request.form.get("notes", ""),
+            dead=0,
+            sold=0,
+            status="Active"
+        )
+
+        db.session.add(batch)
+        db.session.commit()
+
+        return redirect(url_for("chicks"))
+
+    body = """
+    <h2>🐣 Add New Chick Batch</h2>
+
+    <form method="POST">
+
+        <label>Batch Number</label><br>
+        <input type="text" name="batch_number" required><br><br>
+
+        <label>Breed</label><br>
+        <input type="text" name="breed" required><br><br>
+
+        <label>Supplier</label><br>
+        <input type="text" name="supplier" required><br><br>
+
+        <label>Purchase Date</label><br>
+        <input type="date" name="purchase_date" required><br><br>
+
+        <label>Expected Sale Date</label><br>
+        <input type="date" name="expected_sale_date"><br><br>
+
+        <label>Quantity</label><br>
+        <input type="number" name="quantity" required><br><br>
+
+        <label>Buying Price (per chick)</label><br>
+        <input type="number" step="0.01" name="buying_price" required><br><br>
+
+        <label>Notes</label><br>
+        <textarea name="notes" rows="4"></textarea><br><br>
+
+        <button type="submit" class="btn btn-primary">
+            Save Batch
+        </button>
+
+        <a href="/chicks" class="btn">Cancel</a>
+
+    </form>
+    """
+
+    return page("Add Chick Batch", body)
+
+
+
+
+@app.route("/delete_chick/<int:id>")
+def delete_chick(id):
+    chick = ChickBatch.query.get_or_404(id)
+
+    db.session.delete(chick)
+    db.session.commit()
+
+    return redirect(url_for("chicks"))
+
+@app.route("/notifications")
+def notifications():
+
+    notifications = []
+
+    # Eggs not recorded today
+    eggs_today = Egg.query.filter_by(record_date=date.today()).count()
+
+    if eggs_today == 0:
+        notifications.append({
+            "icon": "🥚",
+            "message": "No egg collection has been recorded today."
+        })
+
+    # Low feed stock
+    total_feed = sum(feed.quantity for feed in Feed.query.all())
+
+    if total_feed < 100:
+        notifications.append({
+            "icon": "🌾",
+            "message": f"Feed stock is low ({total_feed:.1f} kg remaining)."
+        })
+
+    # Chicks close to sale date
+    upcoming = ChickBatch.query.filter(
+        ChickBatch.expected_sale_date != None
+    ).all()
+
+    for batch in upcoming:
+        days = (batch.expected_sale_date - date.today()).days
+
+        if 0 <= days <= 7:
+            notifications.append({
+                "icon": "🐥",
+                "message": f"Batch {batch.batch_number} should be sold in {days} day(s)."
+            })
+
+    return page(
+        "Notifications",
+        """
+        <section class="section">
+
+            <h2>🔔 Notifications</h2>
+
+            {% if notifications %}
+
+                {% for n in notifications %}
+
+                    <div class="row">
+
+                        <strong>{{ n.icon }}</strong>
+
+                        <span>{{ n.message }}</span>
+
+                    </div>
+
+                {% endfor %}
+
+            {% else %}
+
+                <p>No notifications 🎉</p>
+
+            {% endif %}
+
+        </section>
+        """,
+        notifications=notifications
     )
 
 
