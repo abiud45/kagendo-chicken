@@ -163,11 +163,9 @@ LAYOUT
 **************************************************/
 
 .wrapper{
-
-    display:flex;
-
-    min-height:100vh;
-
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
 }
 
 .content{
@@ -214,9 +212,74 @@ TOPBAR
 
 }
 
-.page-title{
+.topbar{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:18px 30px;
+
+    background:white;
+
+    border-bottom:1px solid #e2e8f0;
+
+    position:sticky;
+
+    top:0;
+
+    z-index:100;
+
+}
+
+.top-left{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+}
+
+.brand-logo{
+
+    font-size:30px;
+
+}
+
+.brand-name{
 
     font-size:24px;
+
+    font-weight:700;
+
+    color:#0f172a;
+
+}
+
+.top-actions{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:15px;
+
+}
+
+.page-subtitle{
+    color:#64748b;
+    font-size:13px;
+    display:block;
+    margin-top:3px;
+}
+
+.page-title{
+
+    font-size:20px;
 
     font-weight:700;
 
@@ -296,7 +359,7 @@ CONTENT
 
     box-shadow:var(--shadow);
 
-    padding:20px;
+    padding:30px;
 
     margin-bottom:25px;
 
@@ -782,12 +845,31 @@ SIDEBAR
 **************************************************/
 
 .menu-btn{
-    background:none;
-    border:none;
-    font-size:28px;
-    color:#0f172a;
-    cursor:pointer;
-    margin-right:20px;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+
+    width: 48px;
+    height: 48px;
+
+    border: none;
+    border-radius: 12px;
+
+    background: #2563eb;
+    color: white;
+
+    font-size: 24px;
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-shadow: 0 4px 12px rgba(0,0,0,.25);
+
+    z-index: 2000;
+
+    transition: all .3s ease;
 }
 
 .sidebar{
@@ -806,7 +888,11 @@ SIDEBAR
 
 .sidebar.collapsed{
 
-    width:75px;
+    width:0;
+
+    padding:0;
+
+    overflow:hidden;
 
 }
 
@@ -826,7 +912,18 @@ SIDEBAR
 
 .content{
 
-    transition:0.3s;
+    flex:1;
+    width:calc(100% - 260px);
+
+    transition:all .3s ease;
+
+    overflow-x:hidden;
+
+}
+
+.content.expanded{
+
+    width:100%;
 
 }
 
@@ -853,6 +950,60 @@ SIDEBAR
 .logo small{
 
     color:#94a3b8;
+
+}
+
+.quick-menu{
+
+    position:fixed;
+
+    bottom:90px;
+
+    right:25px;
+
+    width:220px;
+
+    background:white;
+
+    border-radius:18px;
+
+    box-shadow:0 10px 30px rgba(0,0,0,.18);
+
+    display:none;
+
+    flex-direction:column;
+
+    overflow:hidden;
+
+    z-index:999;
+
+}
+
+.quick-menu.show{
+
+    display:flex;
+
+}
+
+.quick-menu a{
+
+    padding:16px 20px;
+
+    text-decoration:none;
+
+    color:#0f172a;
+
+    font-weight:600;
+
+    border-bottom:1px solid #eee;
+
+    transition:.25s;
+
+}
+
+.quick-menu a:hover{
+
+    background:#eff6ff;
 
 }
 
@@ -897,6 +1048,8 @@ SIDEBAR
     color:white;
 
 }
+
+
 
 .search-box{
 
@@ -949,6 +1102,10 @@ width:100%;
 <body>
 <div class="wrapper">
 
+<button id="menu-toggle" class="menu-btn">
+    ☰
+</button>
+
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
 
@@ -995,83 +1152,73 @@ width:100%;
     </aside>
 
     <!-- MAIN CONTENT -->
-    <div class="content">
+    <div class="content" id="content">
 
-       <header class="topbar">
+<header class="topbar">
 
-    <button id="menu-toggle" class="menu-btn">
-        ☰
-    </button>
+    <div class="top-left">
 
-    <div>
-        <div class="page-title">
-            {{ title }}
-        </div>
+        <span class="brand-logo">🐔</span>
 
-        <small style="color:#64748b;">
-            Welcome to Kagendo Farm Management System
-        </small>
-    </div>
-
-    ...
-</header>
-
-            <div class="top-actions">
-
-                <div class="search-box">
-                    <input
-                        type="text"
-                        placeholder="Search..."
-                    >
-                </div>
-
-            <div class="notification-container">
-
-    <button id="notification-btn" class="notification-btn">
-
-        🔔
-
-        <span id="notification-count">
-            {{ notification_count }}
+        <span class="brand-name">
+            Kagendo
         </span>
 
-    </button>
+    </div>
 
-    <div id="notification-dropdown" class="notification-dropdown">
+    <div class="top-actions">
 
-        {% if notifications %}
+        <div class="search-box">
+            <input
+                type="text"
+                placeholder="Search..."
+            >
+        </div>
 
-            {% for note in notifications %}
+        <div class="notification-container">
 
-                <div class="notification-item">
+            <button id="notification-btn" class="notification-btn">
+                🔔
+                <span id="notification-count">
+                    {{ notification_count }}
+                </span>
+            </button>
 
-                    {{ note }}
+           <div id="notification-dropdown" class="notification-dropdown">
 
-                </div>
+    {% if notifications %}
 
-            {% endfor %}
-
-        {% else %}
+        {% for note in notifications %}
 
             <div class="notification-item">
 
-                No notifications 🎉
+                {{ note }}
 
             </div>
 
-        {% endif %}
+        {% endfor %}
+
+    {% else %}
+
+        <div class="notification-item">
+
+            No notifications 🎉
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+        </div>
+
+        <button title="Profile">
+            👤
+        </button>
 
     </div>
 
-</div>
-              
-                <button title="Profile">
-                    👤
-                </button>
-
-            </div>
-
-        </header>
+</header>
 
         <main class="page">
 
@@ -1085,53 +1232,165 @@ width:100%;
 
 <script>
 
+// =============================
+// SIDEBAR
+// =============================
 const sidebar = document.getElementById("sidebar");
+const content = document.getElementById("content");
 const toggle = document.getElementById("menu-toggle");
 
-toggle.addEventListener("click", () => {
-    sidebar.classList.toggle("collapsed");
-});
+if (toggle) {
 
-</script>
+    toggle.addEventListener("click", function () {
 
-</body>
+        sidebar.classList.toggle("collapsed");
+        content.classList.toggle("expanded");
 
-</main>
+        localStorage.setItem(
+            "sidebarCollapsed",
+            sidebar.classList.contains("collapsed")
+        );
 
-    </div>
+    });
 
-</div>
+}
 
-<script>
+if (localStorage.getItem("sidebarCollapsed") === "true") {
 
+    sidebar.classList.add("collapsed");
+    content.classList.add("expanded");
+
+}
+
+
+// =============================
+// NOTIFICATIONS
+// =============================
 const bell = document.getElementById("notification-btn");
 const dropdown = document.getElementById("notification-dropdown");
 
 if (bell && dropdown) {
 
-    bell.addEventListener("click", function(e) {
+    bell.addEventListener("click", function (e) {
 
         e.stopPropagation();
 
         dropdown.classList.toggle("show");
 
+        if (quickMenu) {
+            quickMenu.classList.remove("show");
+            fab.innerHTML = "+";
+        }
+
     });
 
-    document.addEventListener("click", function() {
+}
+
+
+// =============================
+// QUICK ACTION MENU
+// =============================
+const fab = document.getElementById("fab");
+const quickMenu = document.getElementById("quickMenu");
+
+if (fab && quickMenu) {
+
+    fab.addEventListener("click", function (e) {
+
+        e.stopPropagation();
+
+        quickMenu.classList.toggle("show");
 
         dropdown.classList.remove("show");
+
+        if (quickMenu.classList.contains("show")) {
+
+            fab.innerHTML = "✕";
+
+        } else {
+
+            fab.innerHTML = "+";
+
+        }
+
+    });
+
+}
+
+
+// =============================
+// CLOSE MENUS WHEN CLICKING OUTSIDE
+// =============================
+document.addEventListener("click", function () {
+
+    if (dropdown) {
+
+        dropdown.classList.remove("show");
+
+    }
+
+    if (quickMenu) {
+
+        quickMenu.classList.remove("show");
+
+    }
+
+    if (fab) {
+
+        fab.innerHTML = "+";
+
+    }
+
+});
+
+</script>
+
+
+<div class="quick-menu" id="quickMenu">
+
+    <a href="{{ url_for('eggs') }}">🥚 Add Eggs</a>
+    <a href="{{ url_for('chicks') }}">🐥 Add Chicks</a>
+    <a href="{{ url_for('feeds') }}">🌾 Add Feed</a>
+    <a href="{{ url_for('sales') }}">💰 Record Sale</a>
+    <a href="{{ url_for('inventory') }}">📦 Inventory</a>
+
+</div>
+
+<button class="fab" id="fab">
+    +
+</button>
+
+<script>
+
+const fab = document.getElementById("fab");
+const quickMenu = document.getElementById("quickMenu");
+
+if (fab && quickMenu) {
+
+    fab.addEventListener("click", function (e) {
+
+        e.stopPropagation();
+
+        quickMenu.classList.toggle("show");
+
+        fab.innerHTML = quickMenu.classList.contains("show") ? "✕" : "+";
+
+    });
+
+    document.addEventListener("click", function (e) {
+
+        if (!quickMenu.contains(e.target) && e.target !== fab) {
+
+            quickMenu.classList.remove("show");
+            fab.innerHTML = "+";
+
+        }
 
     });
 
 }
 
 </script>
-
-<a href="{{ url_for('dashboard') }}" class="fab">
-
-    +
-
-</a>
 
 </body>
 </html>
