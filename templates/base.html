@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>{{ title }} | Kagendo Farm</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+<body>
+<div class="wrapper">
+
+<button id="menu-toggle" class="menu-btn">
+    ☰
+</button>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+
+        <div class="logo">
+            🐔
+            <div>
+                <h2>Kagendo</h2>
+                <small>Farm Manager</small>
+            </div>
+        </div>
+
+      <nav class="sidebar-menu">
+
+    <a href="{{ url_for('dashboard') }}" class="{% if title == 'Dashboard' %}active{% endif %}">
+        🏠 Dashboard
+    </a>
+
+    <a href="{{ url_for('eggs') }}" class="{% if title == 'Eggs' %}active{% endif %}">
+        🥚 Eggs
+    </a>
+
+    <a href="{{ url_for('chicks') }}" class="{% if title == 'Chick Management' %}active{% endif %}">
+        🐥 Chick Management
+    </a>
+
+    <a href="{{ url_for('feeds') }}" class="{% if title == 'Feeds' %}active{% endif %}">
+        🌾 Feed
+    </a>
+
+    <a href="{{ url_for('sales') }}" class="{% if title == 'Sales' %}active{% endif %}">
+        💰 Sales
+    </a>
+
+    <a href="{{ url_for('inventory') }}" class="{% if title == 'Inventory' %}active{% endif %}">
+        📦 Inventory
+    </a>
+
+    <a href="{{ url_for('crate_sales') }}" class="{% if title == 'Crate Sales' %}active{% endif %}">
+        📋 Crate Sales
+    </a>
+
+</nav>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="content" id="content">
+
+<header class="topbar">
+
+    <div class="top-left">
+
+        <span class="brand-logo">🐔</span>
+
+        <span class="brand-name">
+            Kagendo
+        </span>
+
+    </div>
+
+    <div class="top-actions">
+
+        <div class="search-box">
+            <input
+                type="text"
+                placeholder="Search..."
+            >
+        </div>
+
+        <div class="notification-container">
+
+            <button id="notification-btn" class="notification-btn">
+                🔔
+                <span id="notification-count">
+                    {{ notification_count }}
+                </span>
+            </button>
+
+           <div id="notification-dropdown" class="notification-dropdown">
+
+    {% if notifications %}
+
+        {% for note in notifications %}
+
+            <div class="notification-item">
+
+                {{ note }}
+
+            </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <div class="notification-item">
+
+            No notifications 🎉
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+        </div>
+
+        <button title="Profile">
+            👤
+        </button>
+
+    </div>
+
+</header>
+
+        <main class="page">
+
+            {{ body|safe }}
+
+        </main>
+
+    </div>
+
+</div>
+
+
+
+{% if title == "Dashboard" %}
+
+<div class="quick-menu" id="quickMenu">
+
+    <a href="{{ url_for('eggs') }}">🥚 Add Eggs</a>
+    <a href="{{ url_for('chicks') }}">🐥 Add Chicks</a>
+    <a href="{{ url_for('feeds') }}">🌾 Add Feed</a>
+    <a href="{{ url_for('sales') }}">💰 Record Sale</a>
+    <a href="{{ url_for('inventory') }}">📦 Inventory</a>
+
+</div>
+
+<button class="fab" id="fab">
+    +
+</button>
+
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+</body>
+</html>
