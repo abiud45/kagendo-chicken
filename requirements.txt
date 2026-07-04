@@ -3,3 +3,4 @@ Flask-SQLAlchemy
 gunicorn
 reportlab
 psycopg2-binary
+Werkzeug
