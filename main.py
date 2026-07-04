@@ -28,6 +28,9 @@ class Egg(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
     record_date = db.Column(db.Date, default=date.today, nullable=False)
 
+    with app.app_context():
+        db.create_all()
+
 
 class CrateSale(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -38,6 +41,10 @@ class CrateSale(db.Model):
     @property
     def total(self):
         return self.crates * self.price_per_crate
+
+    with app.app_context():
+        db.create_all()
+
 
 
 class Sale(db.Model):
@@ -50,6 +57,9 @@ class Sale(db.Model):
     def total(self):
         return self.quantity * self.price
 
+    with app.app_context():
+        db.create_all()
+
 
 class Feed(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -61,6 +71,9 @@ class Feed(db.Model):
     @property
     def total_cost(self):
         return self.quantity * self.cost_per_unit
+
+    with app.app_context():
+        db.create_all()
 
 
 class ChickBatch(db.Model):
@@ -129,6 +142,8 @@ class FeedRecord(db.Model):
         backref="feed_records"
     )
 
+with app.app_context():
+    db.create_all()
 
 def parse_record_date():
     value = request.form.get("record_date") or str(date.today())
