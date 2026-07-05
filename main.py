@@ -1,8 +1,9 @@
 from flask import Flask, render_template, render_template_string, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 import os
 from werkzeug.utils import secure_filename
+
 
 app = Flask(__name__, template_folder="templates")
 
@@ -144,6 +145,24 @@ class FeedRecord(db.Model):
 
 with app.app_context():
     db.create_all()
+
+
+class Reminder(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+
+    reminder_date = db.Column(db.Date)
+    reminder_time = db.Column(db.Time)
+
+    repeat = db.Column(db.String(20), default="Daily")
+
+    enabled = db.Column(db.Boolean, default=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 
 def parse_record_date():
     value = request.form.get("record_date") or str(date.today())
@@ -928,6 +947,121 @@ def notifications():
         """,
         notifications=notifications
     )
+
+
+@app.route("/reminders")
+def reminders():
+
+    rows = Reminder.query.order_by(
+        Reminder.reminder_date,
+        Reminder.reminder_time
+    ).all()
+
+    return page(
+        "Reminders",
+        "reminders.html",
+        rows=rows
+    )
+
+@app.route("/add_reminder", methods=["GET", "POST"])
+def add_reminder():
+
+    if request.method == "POST":
+
+        reminder = Reminder(
+            title=request.form["title"],
+            description=request.form.get("description", ""),
+            reminder_date=date.fromisoformat(
+                request.form["reminder_date"]
+            ),
+            reminder_time=datetime.strptime(
+                request.form["reminder_time"],
+                "%H:%M"
+            ).time(),
+            repeat=request.form["repeat"],
+            enabled=True
+        )
+
+        db.session.add(reminder)
+        db.session.commit()
+
+        return redirect(url_for("reminders"))
+
+    body = render_template(
+        "add_reminder.html"
+    )
+
+    return page(
+        "Add Reminder",
+        "add_reminder.html"
+    )
+
+
+@app.route("/edit_reminder/<int:id>", methods=["GET", "POST"])
+def edit_reminder(id):
+
+    reminder = Reminder.query.get_or_404(id)
+
+    if request.method == "POST":
+
+        reminder.title = request.form["title"]
+
+        reminder.description = request.form.get(
+            "description",
+            ""
+        )
+
+        reminder.reminder_date = date.fromisoformat(
+            request.form["reminder_date"]
+        )
+
+        reminder.reminder_time = datetime.strptime(
+            request.form["reminder_time"],
+            "%H:%M"
+        ).time()
+
+        reminder.repeat = request.form["repeat"]
+
+        db.session.commit()
+
+        return redirect(url_for("reminders"))
+
+    body = render_template(
+        "add_reminder.html",
+        reminder=reminder
+    )
+
+    return page(
+        "Edit Reminder",
+        "add_reminder.html",
+        reminder=reminder
+    )
+
+@app.route("/toggle_reminder/<int:id>")
+def toggle_reminder(id):
+
+    reminder = Reminder.query.get_or_404(id)
+
+    reminder.enabled = not reminder.enabled
+
+    db.session.commit()
+
+    return redirect(url_for("reminders"))
+
+
+with app.app_context():
+    db.create_all()
+
+
+@app.route("/delete_reminder/<int:id>")
+def delete_reminder(id):
+
+    reminder = Reminder.query.get_or_404(id)
+
+    db.session.delete(reminder)
+    db.session.commit()
+
+    return redirect(url_for("reminders"))
 
 
 if __name__ == "__main__":
