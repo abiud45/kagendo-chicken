@@ -1,11 +1,11 @@
-from flask import Flask, render_template, render_template_string, request, redirect, url_for
+from flask import Flask, render_template, render_template_string, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date, datetime, time, timedelta
 import os
 from werkzeug.utils import secure_filename
 
-
 app = Flask(__name__, template_folder="templates")
+app.secret_key = "change-this-to-a-random-secret-key"
 
 app.config["UPLOAD_FOLDER"] = os.path.join(
     "static",
@@ -29,8 +29,7 @@ class Egg(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
     record_date = db.Column(db.Date, default=date.today, nullable=False)
 
-    with app.app_context():
-        db.create_all()
+
 
 
 class CrateSale(db.Model):
@@ -43,8 +42,7 @@ class CrateSale(db.Model):
     def total(self):
         return self.crates * self.price_per_crate
 
-    with app.app_context():
-        db.create_all()
+
 
 
 
@@ -58,8 +56,7 @@ class Sale(db.Model):
     def total(self):
         return self.quantity * self.price
 
-    with app.app_context():
-        db.create_all()
+
 
 
 class Feed(db.Model):
@@ -73,8 +70,7 @@ class Feed(db.Model):
     def total_cost(self):
         return self.quantity * self.cost_per_unit
 
-    with app.app_context():
-        db.create_all()
+
 
 
 class ChickBatch(db.Model):
@@ -113,9 +109,7 @@ class ChickBatch(db.Model):
         return round((self.dead / self.quantity) * 100, 1)
 
 
-with app.app_context():
-    db.create_all()
-    print("DATABASE CREATED")
+
 
 
 class FeedRecord(db.Model):
@@ -143,8 +137,6 @@ class FeedRecord(db.Model):
         backref="feed_records"
     )
 
-with app.app_context():
-    db.create_all()
 
 
 class Reminder(db.Model):
@@ -161,6 +153,16 @@ class Reminder(db.Model):
     enabled = db.Column(db.Boolean, default=True)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class FarmSettings(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    egg_target = db.Column(db.Integer, default=70)
+    chick_capacity = db.Column(db.Integer, default=100)
+    feed_capacity = db.Column(db.Integer, default=22)
+    sales_target = db.Column(db.Float, default=5000)
+
 
 
 
@@ -207,6 +209,7 @@ def page(title, body, **context):
     )
 
 
+
 @app.route("/")
 def dashboard():
     try:
@@ -214,6 +217,8 @@ def dashboard():
         feeds = Feed.query.all()
         sales = Sale.query.all()
         crate_sales = CrateSale.query.all()
+
+
 
         # ==========================
         # EGG STATISTICS
@@ -224,6 +229,18 @@ def dashboard():
             x.quantity
             for x in Egg.query.filter_by(record_date=date.today()).all()
         )
+
+        settings = FarmSettings.query.first()
+
+        egg_target = settings.egg_target
+        chick_capacity = settings.chick_capacity
+        feed_capacity = settings.feed_capacity
+        sales_target = settings.sales_target
+
+        production_percent = round(
+            (eggs_today / egg_target) * 100
+        ) if egg_target else 0
+
         individual_eggs_sold = sum(x.quantity for x in sales)
 
         crate_eggs_sold = sum(
@@ -260,6 +277,20 @@ def dashboard():
         )
 
         profit = revenue - feed_cost
+
+        # Today's sales
+        sales_today = (
+                sum(x.total for x in sales if x.record_date == date.today())
+                +
+                sum(x.total for x in crate_sales if x.sale_date == date.today())
+        )
+
+        # Feed stock
+        feed_stock = total_feed
+
+        # Current chicks
+        total_chicks = sum(batch.alive for batch in ChickBatch.query.all())
+
 
         # ==========================
         # WEEKLY ANALYTICS
@@ -305,22 +336,38 @@ def dashboard():
         weekly_total_eggs = sum(weekly_eggs)
         weekly_total_sales = sum(weekly_sales)
 
+
     except Exception as e:
         return f"Dashboard error: {e}"
 
     return page(
         "Dashboard",
         "dashboard.html",
+
         eggs_today=eggs_today,
         total_eggs=total_eggs,
         individual_eggs_sold=individual_eggs_sold,
         crate_eggs_sold=crate_eggs_sold,
         available_eggs=available_eggs,
+
         total_feed=total_feed,
         revenue=revenue,
         profit=profit,
+
         weekly_total_eggs=weekly_total_eggs,
         weekly_total_sales=weekly_total_sales,
+
+        # Progress bars
+        egg_target=egg_target,
+        chick_capacity=chick_capacity,
+        feed_capacity=feed_capacity,
+        sales_target=sales_target,
+
+        production_percent=production_percent,
+
+        total_chicks=total_chicks,
+        feed_stock=feed_stock,
+        sales_today=sales_today,
     )
 
 @app.route("/eggs", methods=["GET", "POST"])
@@ -588,6 +635,7 @@ def chicks():
         dead=dead,
         sold=sold,
         today=date.today(),
+
     )
 
 @app.route("/edit_chick/<int:id>", methods=["GET", "POST"])
@@ -1049,8 +1097,34 @@ def toggle_reminder(id):
     return redirect(url_for("reminders"))
 
 
-with app.app_context():
-    db.create_all()
+
+
+
+@app.route("/farm-settings", methods=["GET", "POST"])
+def farm_settings():
+
+    settings = FarmSettings.query.first()
+
+    if request.method == "POST":
+
+        settings.egg_target = int(request.form["egg_target"])
+        settings.chick_capacity = int(request.form["chick_capacity"])
+        settings.feed_capacity = int(request.form["feed_capacity"])
+        settings.sales_target = float(request.form["sales_target"])
+
+        db.session.commit()
+
+        flash("Farm settings updated successfully!")
+
+        return redirect(url_for("farm_settings"))
+
+    return page(
+        "Farm Settings",
+        "farm_settings.html",
+        settings=settings
+    )
+
+
 
 
 @app.route("/delete_reminder/<int:id>")
@@ -1062,6 +1136,54 @@ def delete_reminder(id):
     db.session.commit()
 
     return redirect(url_for("reminders"))
+
+
+from datetime import datetime
+
+@app.route("/check-reminders")
+def check_reminders():
+
+    now = datetime.now()
+
+    today = now.date()
+    current_time = now.time().replace(second=0, microsecond=0)
+
+    reminders = Reminder.query.filter(
+        Reminder.enabled == True,
+        Reminder.reminder_date <= today
+    ).all()
+
+    due = []
+
+    for r in reminders:
+
+        if r.reminder_time:
+
+            reminder_time = r.reminder_time.replace(second=0, microsecond=0)
+
+            if reminder_time == current_time:
+
+                due.append({
+                    "title": r.title,
+                    "description": r.description
+                })
+
+    return {"reminders": due}
+
+
+
+with app.app_context():
+    db.create_all()
+
+    if FarmSettings.query.first() is None:
+        settings = FarmSettings()
+        db.session.add(settings)
+        db.session.commit()
+
+    print("DATABASE CREATED")
+
+
+
 
 
 if __name__ == "__main__":
