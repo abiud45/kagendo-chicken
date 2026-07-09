@@ -1,0 +1,81 @@
+
+<div class="settings-container">
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+
+        {% for message in messages %}
+
+            <div class="success-message">
+                {{ message }}
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+{% endwith %}
+
+    <h2>⚙️ Farm Settings</h2>
+    <p class="subtitle">
+        Configure your farm targets used throughout the dashboard.
+    </p>
+
+    <form method="POST">
+
+        <div class="setting-card">
+
+            <label>🥚 Daily Egg Target</label>
+
+            <input
+                type="number"
+                name="egg_target"
+                value="{{ settings.egg_target }}"
+                required>
+
+        </div>
+
+        <div class="setting-card">
+
+            <label>🐣 Chick Capacity</label>
+
+            <input
+                type="number"
+                name="chick_capacity"
+                value="{{ settings.chick_capacity }}"
+                required>
+
+        </div>
+
+        <div class="setting-card">
+
+            <label>🌾 Feed Storage Capacity (Bags)</label>
+
+            <input
+                type="number"
+                name="feed_capacity"
+                value="{{ settings.feed_capacity }}"
+                required>
+
+        </div>
+
+        <div class="setting-card">
+
+            <label>💰 Daily Sales Target (Ksh)</label>
+
+            <input
+                type="number"
+                step="0.01"
+                name="sales_target"
+                value="{{ settings.sales_target }}"
+                required>
+
+        </div>
+
+        <button class="save-btn">
+            💾 Save Changes
+        </button>
+
+    </form>
+
+</div>
+
