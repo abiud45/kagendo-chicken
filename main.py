@@ -21,6 +21,8 @@ if uri.startswith("postgres://"):
 app.config["SQLALCHEMY_DATABASE_URI"] = uri
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+print("DATABASE:", uri)
+
 db = SQLAlchemy(app)
 
 
@@ -1286,16 +1288,24 @@ def receive_payment():
 
 
 with app.app_context():
+
     db.create_all()
 
     if FarmSettings.query.first() is None:
-        settings = FarmSettings()
+
+        settings = FarmSettings(
+            egg_target=70,
+            chick_capacity=100,
+            feed_capacity=200,
+            sales_target=5000
+        )
+
         db.session.add(settings)
         db.session.commit()
 
+        print("Default farm settings created.")
+
     print("DATABASE CREATED")
-
-
 
 
 
