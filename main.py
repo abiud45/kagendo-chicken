@@ -48,8 +48,14 @@ class CrateSale(db.Model):
 
 class Sale(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+
     quantity = db.Column(db.Integer, nullable=False)
     price = db.Column(db.Float, nullable=False)
+
+    customer = db.Column(db.String(100))
+    on_credit = db.Column(db.Boolean, default=False)
+    paid = db.Column(db.Boolean, default=True)
+
     record_date = db.Column(db.Date, default=date.today, nullable=False)
 
     @property
@@ -58,19 +64,24 @@ class Sale(db.Model):
 
 
 
-
 class Feed(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+
     feed_type = db.Column(db.String(100), nullable=False)
+
+    bags = db.Column(db.Integer, nullable=False, default=1)
+
+    bag_size = db.Column(db.Float, nullable=False, default=50)
+
     quantity = db.Column(db.Float, nullable=False)
-    cost_per_unit = db.Column(db.Float, default=0)
+
+    cost_per_bag = db.Column(db.Float, default=0)
+
     record_date = db.Column(db.Date, default=date.today)
 
     @property
     def total_cost(self):
-        return self.quantity * self.cost_per_unit
-
-
+        return self.bags * self.cost_per_bag
 
 
 class ChickBatch(db.Model):
@@ -164,6 +175,50 @@ class FarmSettings(db.Model):
     sales_target = db.Column(db.Float, default=5000)
 
 
+class FeedInventory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    feed_type = db.Column(db.String(50), unique=True, nullable=False)
+
+    total_kg = db.Column(db.Float, default=0)
+
+    remaining_kg = db.Column(db.Float, default=0)
+
+    low_stock_level = db.Column(db.Float, default=10)
+
+    @property
+    def used_kg(self):
+        return self.total_kg - self.remaining_kg
+
+    @property
+    def percent_remaining(self):
+        if self.total_kg == 0:
+            return 0
+        return round((self.remaining_kg / self.total_kg) * 100)
+
+
+@app.route("/credit-sales")
+def credit_sales():
+
+    rows = Sale.query.filter_by(
+        on_credit=True,
+        paid=False
+    ).order_by(
+        Sale.record_date.desc()
+    ).all()
+
+    total_credit = sum(
+        sale.total
+        for sale in rows
+    )
+
+    return page(
+        "Credit Sales",
+        "credit_sales.html",
+        rows=rows,
+        total_credit=total_credit,
+    )
+
 
 
 def parse_record_date():
@@ -253,13 +308,20 @@ def dashboard():
             - individual_eggs_sold
             - crate_eggs_sold
         )
+        available_crates = available_eggs // 30
+        remaining_eggs = available_eggs % 30
 
         # ==========================
         # FEED
         # ==========================
+
+        feed_inventory = FeedInventory.query.order_by(
+            FeedInventory.feed_type
+        ).all()
+
         total_feed = sum(
-            x.quantity
-            for x in feeds
+            feed.remaining_kg
+            for feed in feed_inventory
         )
 
         feed_cost = sum(
@@ -368,7 +430,11 @@ def dashboard():
         total_chicks=total_chicks,
         feed_stock=feed_stock,
         sales_today=sales_today,
-    )
+        feed_inventory=feed_inventory,
+        available_crates=available_crates,
+        remaining_eggs=remaining_eggs,
+        )
+
 
 @app.route("/eggs", methods=["GET", "POST"])
 def eggs():
@@ -411,14 +477,42 @@ def delete_egg(id):
 @app.route("/feeds", methods=["GET", "POST"])
 def feeds():
     if request.method == "POST":
+
         feed_id = request.form.get("id")
+
+        bags = int(request.form["bags"])
+        bag_size = float(request.form["bag_size"])
+
+        purchased_qty = bags * bag_size
+
         feed = Feed.query.get(feed_id) if feed_id else Feed()
+
         feed.feed_type = request.form["feed_type"].strip()
-        feed.quantity = float(request.form["quantity"])
+        feed.bags = bags
+        feed.bag_size = bag_size
+        feed.quantity = purchased_qty
         feed.cost_per_unit = float(request.form.get("cost_per_unit", 0))
         feed.record_date = parse_record_date()
+
         db.session.add(feed)
+
+        inventory = FeedInventory.query.filter_by(
+            feed_type=feed.feed_type
+        ).first()
+
+        if inventory is None:
+            inventory = FeedInventory(
+                feed_type=feed.feed_type,
+                total_kg=purchased_qty,
+                remaining_kg=purchased_qty
+            )
+            db.session.add(inventory)
+        else:
+            inventory.total_kg += purchased_qty
+            inventory.remaining_kg += purchased_qty
+
         db.session.commit()
+
         return redirect(url_for("feeds"))
 
     edit_id = request.args.get("edit", type=int)
@@ -472,6 +566,14 @@ def sales():
             return f"Not enough eggs in stock. Available: {available_eggs}"
         sale.quantity = int(request.form["quantity"])
         sale.price = float(request.form["price"])
+        sale.on_credit = "on_credit" in request.form
+
+        sale.customer = (
+            request.form.get("customer", "").strip()
+            if sale.on_credit else None
+        )
+
+        sale.paid = not sale.on_credit
         sale.record_date = parse_record_date()
         db.session.add(sale)
         db.session.commit()
@@ -1169,6 +1271,17 @@ def check_reminders():
                 })
 
     return {"reminders": due}
+
+@app.route("/receive-payment/<int:id>")
+def receive_payment():
+
+    sale = Sale.query.get_or_404(id)
+
+    sale.paid = True
+
+    db.session.commit()
+
+    return redirect(url_for("credit_sales"))
 
 
 
