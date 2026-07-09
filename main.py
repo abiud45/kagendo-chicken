@@ -106,6 +106,7 @@ class ChickBatch(db.Model):
     notes = db.Column(db.Text)
 
     photo = db.Column(db.String(255), default="default-chick.jpg")
+    stage = db.Column(db.String(20), default="Starter")
 
     @property
     def total_cost(self):
@@ -897,43 +898,86 @@ def batch_feed(id):
 
     batch = ChickBatch.query.get_or_404(id)
 
+    # Automatically determine feed type from the batch stage
+    feed_type = {
+        "Starter": "Starter Feed",
+        "Grower": "Grower Feed",
+        "Finisher": "Finisher Feed",
+        "Layer": "Layers Mash"
+    }.get(batch.stage, "Starter Feed")
+
     if request.method == "POST":
 
-        record = FeedRecord()
+        quantity = float(request.form["quantity"])
 
-        record.batch_id = batch.id
-        record.feed_type = request.form["feed_type"]
-        record.quantity = float(request.form["quantity"])
-        record.cost = float(request.form["cost"])
-        record.notes = request.form["notes"]
+        inventory = FeedInventory.query.filter_by(
+            feed_type=feed_type
+        ).first()
+
+        if inventory is None:
+            return f"{feed_type} not found in inventory."
+
+        if quantity > inventory.remaining_kg:
+            return f"Only {inventory.remaining_kg:.1f} kg of {feed_type} remaining."
+
+        feed = Feed.query.filter_by(
+            feed_type=feed_type
+        ).order_by(
+            Feed.record_date.desc(),
+            Feed.id.desc()
+        ).first()
+
+        if feed:
+            cost_per_kg = feed.cost_per_bag / feed.bag_size
+        else:
+            cost_per_kg = 0
+
+        record = FeedRecord(
+            batch_id=batch.id,
+            feed_type=feed_type,
+            quantity=quantity,
+            cost=quantity * cost_per_kg,
+            notes=request.form.get("notes", "")
+        )
 
         db.session.add(record)
+
+        inventory.remaining_kg -= quantity
+
         db.session.commit()
 
         return redirect(url_for("batch_feed", id=batch.id))
 
+    # Feed history
     records = FeedRecord.query.filter_by(
         batch_id=batch.id
     ).order_by(
         FeedRecord.record_date.desc()
     ).all()
 
+    # Current inventory
+    inventory = FeedInventory.query.filter_by(
+        feed_type=feed_type
+    ).first()
+
+    remaining_feed = inventory.remaining_kg if inventory else 0
+
     total_feed = sum(r.quantity for r in records)
+
     total_cost = sum(r.cost for r in records)
 
-    return render_template(
-        "base.html",
-        title="Batch Feed",
-        body=render_template(
-            "batch_feed.html",
-            batch=batch,
-            records=records,
-            total_feed=total_feed,
-            total_cost=total_cost,
-        ),
-        notifications=[],
-        notification_count=0,
+    return page(
+        "Feed Batch",
+        "batch_feed.html",
+
+        batch=batch,
+        feed_type=feed_type,
+        records=records,
+        remaining_feed=remaining_feed,
+        total_feed=total_feed,
+        total_cost=total_cost,
     )
+
 
 
 @app.route("/add_chick", methods=["GET", "POST"])
@@ -963,11 +1007,13 @@ def add_chick():
             if request.form["expected_sale_date"] else None,
             quantity=int(request.form["quantity"]),
             buying_price=float(request.form["buying_price"]),
+            stage=request.form["stage"],
             notes=request.form.get("notes", ""),
             dead=0,
             sold=0,
             status="Active",
             photo=filename  # ✅ STORE FILENAME ONLY
+
         )
 
         db.session.add(batch)
