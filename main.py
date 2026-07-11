@@ -152,6 +152,29 @@ class FeedRecord(db.Model):
     )
 
 
+class ChickDeath(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    batch_id = db.Column(
+        db.Integer,
+        db.ForeignKey("chick_batch.id"),
+        nullable=False
+    )
+
+    quantity = db.Column(db.Integer, nullable=False)
+
+    reason = db.Column(db.String(100))
+
+    notes = db.Column(db.Text)
+
+    death_date = db.Column(db.Date, default=date.today)
+
+    batch = db.relationship(
+        "ChickBatch",
+        backref="death_records"
+    )
+
+
 
 class Reminder(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -742,6 +765,86 @@ def chicks():
         today=date.today(),
 
     )
+
+
+@app.route("/record_death/<int:id>", methods=["GET", "POST"])
+def record_death(id):
+
+    batch = ChickBatch.query.get_or_404(id)
+
+    if request.method == "POST":
+
+        quantity = int(request.form["quantity"])
+
+        if quantity <= 0:
+            return "Quantity must be greater than zero."
+
+        if quantity > batch.alive:
+            return "Cannot record more deaths than alive chicks."
+
+        death = ChickDeath(
+            batch_id=batch.id,
+            quantity=quantity,
+            reason=request.form.get("reason"),
+            notes=request.form.get("notes")
+        )
+
+        batch.dead += quantity
+
+        db.session.add(death)
+        db.session.commit()
+
+        return redirect(url_for("chicks"))
+
+    body = f"""
+    <h2>💀 Record Chick Death</h2>
+
+    <h3>Batch: {batch.batch_number}</h3>
+
+    <p><strong>Alive:</strong> {batch.alive}</p>
+
+    <form method="POST">
+
+        <label>Number Dead</label><br>
+
+        <input
+            type="number"
+            name="quantity"
+            min="1"
+            max="{batch.alive}"
+            required><br><br>
+
+        <label>Reason</label><br>
+
+        <select name="reason">
+
+            <option>Disease</option>
+
+            <option>Predators</option>
+
+            <option>Heat Stress</option>
+
+            <option>Cold Stress</option>
+
+            <option>Accident</option>
+
+            <option>Unknown</option>
+
+        </select><br><br>
+
+        <label>Notes</label><br>
+
+        <textarea name="notes"></textarea><br><br>
+
+        <button class="btn btn-danger">
+            Save Death Record
+        </button>
+
+    </form>
+    """
+
+    return page("Record Death", body)
+
 
 @app.route("/edit_chick/<int:id>", methods=["GET", "POST"])
 def edit_chick(id):
