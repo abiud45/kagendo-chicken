@@ -1007,7 +1007,7 @@ def add_chick():
             if request.form["expected_sale_date"] else None,
             quantity=int(request.form["quantity"]),
             buying_price=float(request.form["buying_price"]),
-            stage=request.form["stage"],
+            stage="Day-old",
             notes=request.form.get("notes", ""),
             dead=0,
             sold=0,
@@ -1050,7 +1050,29 @@ def add_chick():
 
         <label>Buying Price (per chick)</label><br>
         <input type="number" step="0.01" name="buying_price" required><br><br>
+      
+        <label>Stage</label><br>
 
+        <select name="stage" required>
+        <option value="Starter">Starter</option>
+        <option value="Grower">Grower</option>
+        <option value="Layer">Layer</option>
+        <option value="Broiler">Broiler</option>
+        </select><br><br>
+      
+        <label>Stage</label><br>
+
+        <select name="stage" required>
+        <option value="Day-old">Day-old</option>
+        <option value="Brooder">Brooder</option>
+        <option value="Grower">Grower</option>
+        <option value="Layer">Layer</option>
+        <option value="Broiler">Broiler</option>
+        </select><br><br>
+
+        <label>Notes</label><br>
+        <textarea name="notes" rows="4"></textarea><br><br>
+        
         <label>Notes</label><br>
         <textarea name="notes" rows="4"></textarea><br><br>
 
@@ -1068,7 +1090,7 @@ def add_chick():
 
 
 
-@app.route("/delete_chick/<int:id>")
+@app.route("/delete_chick/<int:id>", methods=["POST"])
 def delete_chick(id):
     chick = ChickBatch.query.get_or_404(id)
 
