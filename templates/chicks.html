@@ -1,0 +1,205 @@
+<section class="section">
+
+    <div class="section-title">
+        <h2>🐣 Chick Management</h2>
+        <a class="button save"
+           href="{{ url_for('add_chick') }}">
+            ➕ New Batch
+        </a>
+    </div>
+
+</section>
+
+
+<section class="cards">
+
+    <article class="card green">
+        <span>Total Birds</span>
+        <strong>{{ total }}</strong>
+    </article>
+
+    <article class="card blue">
+        <span>Alive</span>
+        <strong>{{ alive }}</strong>
+    </article>
+
+    <article class="card red">
+        <span>Dead</span>
+        <strong>{{ dead }}</strong>
+    </article>
+
+    <article class="card purple">
+        <span>Sold</span>
+        <strong>{{ sold }}</strong>
+    </article>
+
+</section>
+
+
+<section class="section">
+
+<div class="batch-grid">
+
+{% for b in batches %}
+
+<div class="batch-card">
+
+<div class="batch-image">
+    <img
+        src="{{ url_for('static',
+            filename='uploads/chicks/' ~ (b.photo or 'default-chick.jpg')) }}"
+        alt="Batch Photo">
+</div>
+
+<h3>🐣 {{ b.batch_number }}</h3>
+
+<p><b>{{ b.breed }}</b></p>
+
+<label>Growth Stage</label>
+
+<select name="stage">
+
+    <option value="Starter">Starter</option>
+
+    <option value="Grower">Grower</option>
+
+    <option value="Finisher">Finisher</option>
+
+    <option value="Layer">Layer</option>
+
+</select>
+
+<br><br>
+
+
+
+<span class="status-badge
+{% if b.status == 'Active' %}
+status-active
+{% elif b.status == 'Sold' %}
+status-sold
+{% else %}
+status-closed
+{% endif %}">
+    {{ b.status }}
+</span>
+
+<hr>
+
+<p>🐥 Purchased: {{ b.quantity }}</p>
+
+<p>🟢 Alive: {{ b.alive }}</p>
+
+<p>
+❤️ Survival:
+{{ "%.1f"|format((b.alive / b.quantity * 100) if b.quantity else 0) }}%
+</p>
+
+<div class="progress">
+    <div class="progress-bar"
+         style="width: {{ (b.alive / b.quantity * 100) if b.quantity else 0 }}%;">
+    </div>
+</div>
+
+<p>💀 Dead: {{ b.dead }}</p>
+
+<p>💰 Sold: {{ b.sold }}</p>
+
+<p>
+
+📅
+
+{{ (today - b.purchase_date).days }}
+
+Days Old
+
+</p>
+
+<p>
+
+🏪
+
+{{ b.supplier }}
+
+</p>
+
+<hr>
+
+<p>
+
+🌾 Feed Used
+
+<b>0 kg</b>
+
+</p>
+
+<p>
+
+💵 Feed Cost
+
+<b>KES 0</b>
+
+</p>
+
+<p>
+
+📈 Profit
+
+<b>KES 0</b>
+
+</p>
+
+<p>🌾 Feed Used: {{ "%.1f"|format(b.feed_used) }} kg</p>
+
+<p>💰 Feed Cost: KES {{ "%.2f"|format(b.feed_cost) }}</p>
+
+<div class="actions">
+
+<a class="button"
+   href="{{ url_for('batch_feed', id=b.id) }}">
+   🌾 Manage Feed
+</a>
+
+<a class="button edit"
+
+href="{{ url_for('edit_chick', id=b.id) }}">
+
+✏ Edit
+
+</a>
+
+<a class="button"
+
+href="#">
+
+🌾 Feed
+
+</a>
+
+<a class="button"
+
+href="#">
+
+📊 Details
+
+</a>
+
+<form action="{{ url_for('delete_chick', id=b.id) }}"
+      method="POST"
+      onsubmit="return confirm('Are you sure you want to delete this chick batch?');">
+
+    <button type="submit" class="delete">
+        🗑 Delete
+    </button>
+
+</form>
+
+</div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+</section>
