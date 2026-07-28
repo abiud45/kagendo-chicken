@@ -1,0 +1,403 @@
+<div class="page-container">
+
+
+<!-- DASHBOARD HEADER -->
+
+<section class="dashboard-header">
+
+    <div class="welcome-logo">
+
+        <h1>
+            Kagendo Chicken
+        </h1>
+
+        <p>
+            Farm Management Dashboard
+        </p>
+
+    </div>
+
+</section>
+
+
+
+
+<!-- SUMMARY CARDS -->
+
+<section class="dashboard-cards">
+
+
+    <!-- EGGS -->
+
+    <article class="dashboard-card eggs-card">
+
+        <h3>Egg Production</h3>
+
+        <h1>
+            {{ total_eggs }}
+        </h1>
+
+        <p>Total Eggs</p>
+
+
+        <div class="card-info">
+
+            <span>
+                Today:
+                <strong>
+                    {{ eggs_today }}
+                </strong>
+            </span>
+
+
+            <span>
+                Available:
+                <strong>
+                    {{ available_eggs }}
+                </strong>
+            </span>
+
+
+            <span>
+                Crates:
+                <strong>
+                    {{ available_crates }}
+                </strong>
+            </span>
+
+        </div>
+
+
+    </article>
+
+
+
+
+
+    <!-- CASH -->
+
+    <article class="dashboard-card cash-card">
+
+
+        <h3>Farm Cash</h3>
+
+
+        <h1>
+            KSh {{ "{:,.0f}".format(available_cash) }}
+        </h1>
+
+
+        <p>
+            Available Cash
+        </p>
+
+
+        <div class="card-info">
+
+            <span>
+                Income:
+                <strong>
+                    KSh {{ "{:,.0f}".format(revenue) }}
+                </strong>
+            </span>
+
+
+        </div>
+
+
+    </article>
+
+
+
+
+
+
+    <!-- FEED -->
+
+    <article class="dashboard-card feed-card">
+
+
+        <h3>Feed Stock</h3>
+
+
+        <h1>
+            {{ "%.1f"|format(total_feed) }} kg
+        </h1>
+
+
+        <p>
+            Available Feed
+        </p>
+
+
+        <div class="card-info">
+
+
+            <span>
+                Feed Types:
+                <strong>
+                    {{ feed_inventory|length }}
+                </strong>
+            </span>
+
+
+        </div>
+
+
+    </article>
+
+
+
+
+
+
+    <!-- CHICKS -->
+
+    <article class="dashboard-card chicks-card">
+
+
+        <h3>Chicks Stock</h3>
+
+
+        <h1>
+            {{ total_chicks }}
+        </h1>
+
+
+        <p>
+            Active Chicks
+        </p>
+
+
+        <div class="card-info">
+
+
+            <span>
+                Capacity:
+                <strong>
+                    {{ chick_capacity }}
+                </strong>
+            </span>
+
+
+        </div>
+
+
+    </article>
+
+
+
+</section>
+
+
+
+
+
+
+
+<!-- FARM SUMMARY -->
+
+
+<section class="section">
+
+
+<div class="section-title">
+
+<h2>
+Farm Summary
+</h2>
+
+</div>
+
+
+
+<div class="farm-summary">
+
+
+
+<!-- EGGS PROGRESS -->
+
+<div class="progress-item">
+
+
+<div class="label">
+
+<span>
+Egg Production
+</span>
+
+
+<span>
+{{ production_percent }}%
+</span>
+
+
+</div>
+
+
+
+<div class="progress">
+
+<div class="progress-fill production"
+
+style="width:{{ production_percent }}%;">
+
+</div>
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+<!-- CHICKS PROGRESS -->
+
+
+<div class="progress-item">
+
+
+<div class="label">
+
+
+<span>
+Chicks
+</span>
+
+
+<span>
+{{ total_chicks }}/{{ chick_capacity }}
+</span>
+
+
+</div>
+
+
+
+<div class="progress">
+
+
+<div class="progress-fill chicks"
+
+style="width:
+{{ (total_chicks/chick_capacity)*100 if chick_capacity else 0 }}%;">
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- FEED SUMMARY -->
+
+
+{% for feed in feed_inventory %}
+
+
+<div class="progress-item">
+
+
+<div class="label">
+
+
+<span>
+{{ feed.feed_type }}
+</span>
+
+
+<span>
+{{ "%.1f"|format(feed.remaining_kg) }} kg
+</span>
+
+
+</div>
+
+
+
+<div class="progress">
+
+
+<div class="progress-fill feed-good"
+
+style="width:
+{{ feed.percent_remaining }}%;">
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+
+{% endfor %}
+
+
+
+
+
+
+<!-- SALES -->
+
+
+<div class="progress-item">
+
+
+<div class="label">
+
+
+<span>
+Sales Today
+</span>
+
+
+<span>
+KSh {{ sales_today }}
+</span>
+
+
+</div>
+
+
+
+<div class="progress">
+
+
+<div class="progress-fill sales"
+
+style="width:
+{{ (sales_today/sales_target)*100 if sales_target else 0 }}%;">
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+</div>
+
+
+</section>
+
+
+
+</div>
