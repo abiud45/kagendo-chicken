@@ -65,25 +65,76 @@ class Sale(db.Model):
         return self.quantity * self.price
 
 
+class EggAdjustment(db.Model):
+    __tablename__ = "egg_adjustment"
 
-class Feed(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
-    feed_type = db.Column(db.String(100), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
 
-    bags = db.Column(db.Integer, nullable=False, default=1)
+    reason = db.Column(db.String(100), nullable=False)
 
-    bag_size = db.Column(db.Float, nullable=False, default=50)
+    notes = db.Column(db.Text)
 
-    quantity = db.Column(db.Float, nullable=False)
-
-    cost_per_bag = db.Column(db.Float, default=0)
-
-    record_date = db.Column(db.Date, default=date.today)
+    record_date = db.Column(
+        db.Date,
+        default=date.today,
+        nullable=False
+    )
 
     @property
-    def total_cost(self):
-        return self.bags * self.cost_per_bag
+    def icon(self):
+        icons = {
+            "Home Consumption": "🍳",
+            "Broken Eggs": "💥",
+            "Donation": "🎁",
+            "Hatching": "🐣",
+            "Spoiled Eggs": "⚠️",
+            "Stock Correction": "📝"
+        }
+        return icons.get(self.reason, "🥚")
+
+
+class Feed(db.Model):
+    __tablename__ = "feed"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    bag_number = db.Column(db.String(20), unique=True, nullable=False)
+
+    feed_type = db.Column(db.String(50), nullable=False)
+
+    supplier = db.Column(db.String(100))
+
+    purchase_date = db.Column(db.Date, default=date.today)
+
+    bag_size = db.Column(db.Float, nullable=False)
+
+    remaining_kg = db.Column(db.Float, nullable=False)
+
+    cost_per_bag = db.Column(db.Float, nullable=False)
+
+    status = db.Column(db.String(20), default="Available")
+
+    notes = db.Column(db.Text)
+
+    records = db.relationship(
+        "FeedRecord",
+        back_populates="feed",
+        cascade="all, delete-orphan"
+    )
+
+    @property
+    def cost_per_kg(self):
+        if self.bag_size == 0:
+            return 0
+        return self.cost_per_bag / self.bag_size
+
+    @property
+    def percent_remaining(self):
+        if self.bag_size == 0:
+            return 0
+        return round((self.remaining_kg / self.bag_size) * 100)
 
 
 class ChickBatch(db.Model):
@@ -108,6 +159,14 @@ class ChickBatch(db.Model):
     photo = db.Column(db.String(255), default="default-chick.jpg")
     stage = db.Column(db.String(20), default="Starter")
 
+    # Relationship to feed records
+    feed_records = db.relationship(
+        "FeedRecord",
+        backref="batch",
+        lazy=True,
+        cascade="all, delete-orphan"
+    )
+
     @property
     def total_cost(self):
         return self.quantity * self.buying_price
@@ -127,6 +186,8 @@ class ChickBatch(db.Model):
 
 
 class FeedRecord(db.Model):
+    __tablename__ = "feed_record"
+
     id = db.Column(db.Integer, primary_key=True)
 
     batch_id = db.Column(
@@ -135,21 +196,31 @@ class FeedRecord(db.Model):
         nullable=False
     )
 
-    feed_type = db.Column(db.String(100))
-    quantity = db.Column(db.Float)
-    cost = db.Column(db.Float)
-
-    record_date = db.Column(
-        db.Date,
-        default=date.today
+    feed_id = db.Column(
+        db.Integer,
+        db.ForeignKey("feed.id"),
+        nullable=False
     )
+
+    quantity = db.Column(db.Float, nullable=False)
+
+    cost = db.Column(db.Float, nullable=False)
+
+    record_date = db.Column(db.Date, default=date.today)
 
     notes = db.Column(db.Text)
 
-    batch = db.relationship(
-        "ChickBatch",
-        backref="feed_records"
+    feed = db.relationship(
+        "Feed",
+        back_populates="records"
     )
+    
+
+
+class FeedType(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True)
+
 
 
 class ChickDeath(db.Model):
@@ -192,6 +263,7 @@ class Reminder(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+
 class FarmSettings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
@@ -201,27 +273,50 @@ class FarmSettings(db.Model):
     sales_target = db.Column(db.Float, default=5000)
 
 
-class FeedInventory(db.Model):
+class CashWithdrawal(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    amount = db.Column(db.Float, nullable=False)
+    reason = db.Column(db.String(100))
+    withdrawn_by = db.Column(db.String(50))
+    withdrawal_date = db.Column(db.Date, default=date.today)
+    notes = db.Column(db.Text)
+
+
+class CashTransaction(db.Model):
+    __tablename__ = "cash_transaction"
+
     id = db.Column(db.Integer, primary_key=True)
 
-    feed_type = db.Column(db.String(50), unique=True, nullable=False)
+    transaction_type = db.Column(
+        db.String(20),
+        nullable=False
+    )  # Income / Withdrawal
 
-    total_kg = db.Column(db.Float, default=0)
+    source = db.Column(
+        db.String(50),
+        nullable=False
+    )  # Egg Sale / Crate Sale / Withdrawal
 
-    remaining_kg = db.Column(db.Float, default=0)
+    amount = db.Column(
+        db.Float,
+        nullable=False
+    )
 
-    low_stock_level = db.Column(db.Float, default=10)
+    transaction_date = db.Column(
+        db.Date,
+        default=date.today
+    )
 
-    @property
-    def used_kg(self):
-        return self.total_kg - self.remaining_kg
+    reason = db.Column(
+        db.String(200)
+    )
 
-    @property
-    def percent_remaining(self):
-        if self.total_kg == 0:
-            return 0
-        return round((self.remaining_kg / self.total_kg) * 100)
+    notes = db.Column(
+        db.Text
+    )
 
+    def __repr__(self):
+        return f"<CashTransaction {self.transaction_type} {self.amount}>"
 
 @app.route("/credit-sales")
 def credit_sales():
@@ -262,7 +357,7 @@ def page(title, body, **context):
     if eggs_today == 0:
         notifications.append("🥚 No egg collection recorded today.")
 
-    total_feed = sum(feed.quantity for feed in Feed.query.all())
+    total_feed = sum(feed.remaining_kg for feed in Feed.query.all())
 
     if total_feed < 100:
         notifications.append(
@@ -329,10 +424,21 @@ def dashboard():
             for x in crate_sales
         )
 
+        adjusted_eggs = sum(
+            x.quantity
+            for x in EggAdjustment.query.all()
+        )
+
+        adjusted_eggs = sum(
+            a.quantity
+            for a in EggAdjustment.query.all()
+        )
+
         available_eggs = (
-            total_eggs
-            - individual_eggs_sold
-            - crate_eggs_sold
+                total_eggs
+                - individual_eggs_sold
+                - crate_eggs_sold
+                - adjusted_eggs
         )
         available_crates = available_eggs // 30
         remaining_eggs = available_eggs % 30
@@ -341,8 +447,9 @@ def dashboard():
         # FEED
         # ==========================
 
-        feed_inventory = FeedInventory.query.order_by(
-            FeedInventory.feed_type
+        feed_inventory = Feed.query.order_by(
+            Feed.feed_type,
+            Feed.bag_number
         ).all()
 
         total_feed = sum(
@@ -351,7 +458,7 @@ def dashboard():
         )
 
         feed_cost = sum(
-            x.total_cost
+            x.remaining_kg * x.cost_per_kg
             for x in feeds
         )
 
@@ -363,8 +470,8 @@ def dashboard():
             +
             sum(x.total for x in crate_sales)
         )
+        available_cash = get_available_cash()
 
-        profit = revenue - feed_cost
 
         # Today's sales
         sales_today = (
@@ -424,6 +531,39 @@ def dashboard():
         weekly_total_eggs = sum(weekly_eggs)
         weekly_total_sales = sum(weekly_sales)
 
+        home_consumption = sum(
+            x.quantity
+            for x in EggAdjustment.query.filter_by(
+                reason="Home Consumption"
+            ).all()
+        )
+
+        broken_eggs = sum(
+            x.quantity
+            for x in EggAdjustment.query.filter_by(
+                reason="Broken Eggs"
+            ).all()
+        )
+
+        hatching = sum(
+            x.quantity
+            for x in EggAdjustment.query.filter_by(
+                reason="Hatching"
+            ).all()
+        )
+
+        spoiled = sum(
+            x.quantity
+            for x in EggAdjustment.query.filter_by(
+                reason="Spoiled Eggs"
+            ).all()
+        )
+
+        home_consumption = home_consumption,
+        broken_eggs = broken_eggs,
+        hatching = hatching,
+        spoiled = spoiled,
+
 
     except Exception as e:
         return f"Dashboard error: {e}"
@@ -440,7 +580,7 @@ def dashboard():
 
         total_feed=total_feed,
         revenue=revenue,
-        profit=profit,
+        available_cash=available_cash,
 
         weekly_total_eggs=weekly_total_eggs,
         weekly_total_sales=weekly_total_sales,
@@ -464,18 +604,62 @@ def dashboard():
 
 @app.route("/eggs", methods=["GET", "POST"])
 def eggs():
-
     if request.method == "POST":
-        egg_id = request.form.get("id")
-        egg = Egg.query.get(egg_id) if egg_id else Egg()
 
-        egg.quantity = int(request.form["quantity"])
-        egg.record_date = parse_record_date()
+        form_type = request.form.get("form_type", "collection")
 
-        db.session.add(egg)
-        db.session.commit()
+        # ==========================
+        # Egg Collection
+        # ==========================
+        if form_type == "collection":
 
-        return redirect(url_for("eggs"))
+            egg_id = request.form.get("id")
+            egg = Egg.query.get(egg_id) if egg_id else Egg()
+
+            egg.quantity = int(request.form["quantity"])
+            egg.record_date = parse_record_date()
+
+            db.session.add(egg)
+            db.session.commit()
+
+            flash("Egg collection recorded successfully.", "success")
+
+            return redirect(url_for("eggs"))
+
+        # ==========================
+        # Egg Adjustment
+        # ==========================
+        elif form_type == "adjustment":
+
+            quantity = int(request.form["quantity"])
+            reason = request.form["reason"]
+            notes = request.form.get("notes", "")
+
+            total_eggs = sum(e.quantity for e in Egg.query.all())
+            sold = sum(s.quantity for s in Sale.query.all())
+            crate_sold = sum(c.crates * 30 for c in CrateSale.query.all())
+            adjusted = sum(a.quantity for a in EggAdjustment.query.all())
+
+            available = total_eggs - sold - crate_sold - adjusted
+
+            if quantity > available:
+                flash("Not enough eggs available.", "danger")
+
+                return redirect(url_for("eggs"))
+
+            adjustment = EggAdjustment(
+                quantity=quantity,
+                reason=reason,
+                notes=notes
+            )
+
+            db.session.add(adjustment)
+            db.session.commit()
+
+            flash("Egg adjustment recorded.", "success")
+
+            return redirect(url_for("eggs"))
+
 
     edit_id = request.args.get("edit", type=int)
     edit_record = Egg.query.get(edit_id) if edit_id else None
@@ -485,13 +669,92 @@ def eggs():
         Egg.id.desc()
     ).all()
 
+    adjustments = EggAdjustment.query.order_by(
+        EggAdjustment.record_date.desc(),
+        EggAdjustment.id.desc()
+    ).all()
+
+    from datetime import timedelta
+
+    seven_days_ago = date.today() - timedelta(days=7)
+
+    recent_adjustments = EggAdjustment.query.filter(
+        EggAdjustment.record_date >= seven_days_ago
+    ).all()
+
+    adjusted_eggs = sum(
+        a.quantity
+        for a in recent_adjustments
+    )
+
+    weekly_adjustments = adjusted_eggs
+
+    total_eggs = sum(
+        e.quantity
+        for e in Egg.query.all()
+    )
+
+    individual_sold = sum(
+        s.quantity
+        for s in Sale.query.all()
+    )
+
+    crate_sold = sum(
+        c.crates * 30
+        for c in CrateSale.query.all()
+    )
+
+    available_eggs = (
+            total_eggs
+            - individual_sold
+            - crate_sold
+            - adjusted_eggs
+    )
+
+    # ==========================
+    # WEEKLY EGG USAGE PERCENTAGE
+    # ==========================
+
+    if total_eggs > 0:
+        usage_percent = round(
+            (weekly_adjustments / total_eggs) * 100
+        )
+    else:
+        usage_percent = 0
+
+    # Egg Statistics
+    eggs_sold = individual_sold + crate_sold
+
+    collection_today = sum(
+        e.quantity
+        for e in Egg.query.filter_by(record_date=date.today()).all()
+    )
+
+    adjustments_today = sum(
+        a.quantity
+        for a in adjustments
+        if a.record_date == date.today()
+    )
+
+
+
     return page(
         "Eggs",
         "eggs.html",
+
         rows=rows,
         edit_record=edit_record,
-        today=date.today().isoformat()
+        today=date.today().isoformat(),
+
+        adjustments=adjustments,
+        adjusted_eggs=adjusted_eggs,
+        weekly_adjustments=weekly_adjustments,
+        usage_percent=usage_percent,
+        available_eggs=available_eggs,
+        total_eggs=total_eggs
     )
+
+
 @app.route("/delete-egg/<int:id>", methods=["POST"])
 def delete_egg(id):
     record = Egg.query.get_or_404(id)
@@ -500,67 +763,138 @@ def delete_egg(id):
     return redirect(url_for("eggs"))
 
 
+from datetime import date
+from flask import request, redirect, url_for, flash, render_template
+
 @app.route("/feeds", methods=["GET", "POST"])
 def feeds():
+
+    edit_id = request.args.get("edit", type=int)
+    edit_record = db.session.get(Feed, edit_id) if edit_id else None
+
     if request.method == "POST":
 
-        feed_id = request.form.get("id")
+        feed = edit_record if edit_record else Feed()
 
-        bags = int(request.form["bags"])
-        bag_size = float(request.form["bag_size"])
+        if not edit_record:
 
-        purchased_qty = bags * bag_size
+            feed_type = request.form["feed_type"]
 
-        feed = Feed.query.get(feed_id) if feed_id else Feed()
+            prefixes = {
+                "Starter": "ST",
+                "Grower": "GR",
+                "Layers Mash": "LM",
+                "Finisher": "FN"
+            }
 
-        feed.feed_type = request.form["feed_type"].strip()
-        feed.bags = bags
-        feed.bag_size = bag_size
-        feed.quantity = purchased_qty
-        feed.cost_per_unit = float(request.form.get("cost_per_unit", 0))
-        feed.record_date = parse_record_date()
+            prefix = prefixes.get(feed_type, "FD")
+
+            last = Feed.query.filter(
+                Feed.bag_number.like(f"{prefix}%")
+            ).order_by(Feed.id.desc()).first()
+
+            if last:
+                number = int(last.bag_number.replace(prefix, ""))
+                feed.bag_number = f"{prefix}{number+1:03d}"
+            else:
+                feed.bag_number = f"{prefix}001"
+
+            feed.remaining_kg = float(request.form["remaining_kg"])
+
+        feed.feed_type = request.form["feed_type"]
+        feed.supplier = request.form["supplier"]
+        feed.purchase_date = datetime.strptime(
+            request.form["purchase_date"],
+            "%Y-%m-%d"
+        ).date()
+
+        feed.bag_size = float(request.form["bag_size"])
+        feed.cost_per_bag = float(request.form["cost_per_bag"])
+        feed.notes = request.form.get("notes", "")
+
+        if feed.remaining_kg > feed.bag_size:
+            feed.remaining_kg = feed.bag_size
+
+        if feed.remaining_kg == 0:
+            feed.status = "Finished"
+        elif feed.remaining_kg < feed.bag_size:
+            feed.status = "Half Used"
+        else:
+            feed.status = "Available"
 
         db.session.add(feed)
-
-        inventory = FeedInventory.query.filter_by(
-            feed_type=feed.feed_type
-        ).first()
-
-        if inventory is None:
-            inventory = FeedInventory(
-                feed_type=feed.feed_type,
-                total_kg=purchased_qty,
-                remaining_kg=purchased_qty
-            )
-            db.session.add(inventory)
-        else:
-            inventory.total_kg += purchased_qty
-            inventory.remaining_kg += purchased_qty
-
         db.session.commit()
+
+        flash(
+            "Feed updated successfully."
+            if edit_record
+            else
+            "Feed bag added successfully.",
+            "success"
+        )
 
         return redirect(url_for("feeds"))
 
-    edit_id = request.args.get("edit", type=int)
-    edit_record = Feed.query.get(edit_id) if edit_id else None
-    rows = Feed.query.order_by(Feed.record_date.desc(), Feed.id.desc()).all()
+    feeds = Feed.query.order_by(
+        Feed.purchase_date.desc()
+    ).all()
 
-    return page(
-        "Feeds",
-        "feeds.html",
-        rows=rows,
-        edit_record=edit_record,
-        today=date.today().isoformat(),
+    # Dashboard statistics
+    total_feed_kg = sum(feed.remaining_kg for feed in feeds)
+
+    total_feed_value = sum(feed.cost_per_bag for feed in feeds)
+
+    low_stock_count = sum(
+        1 for feed in feeds
+        if feed.remaining_kg <= 10
+    )
+
+    print("NUMBER OF FEEDS:", len(feeds))
+
+    for f in feeds:
+        print(
+            f.bag_number,
+            f.feed_type,
+            f.remaining_kg
+        )
+
+    print("FEEDS PAGE DATA:", feeds)
+    return render_template(
+        "base.html",
+        title="Feeds",
+        body=render_template(
+            "feeds.html",
+            feeds=feeds,
+            edit_record=edit_record,
+            today=date.today(),
+            total_feed_kg=total_feed_kg,
+            total_feed_value=total_feed_value,
+            low_stock_count=low_stock_count,
+        ),
+        notification_count=0,
+        notifications=[],
+        feed_css="feeds.css"
     )
 
 
-@app.route("/delete-feed/<int:id>", methods=["POST"])
+@app.route("/delete_feed/<int:id>", methods=["POST"])
 def delete_feed(id):
-    record = Feed.query.get_or_404(id)
-    db.session.delete(record)
-    db.session.commit()
-    return redirect(url_for("feeds"))
 
+    feed = Feed.query.get_or_404(id)
+
+    if feed.records:
+        flash(
+            "Cannot delete this feed bag because it has feeding history.",
+            "danger"
+        )
+        return redirect(url_for("feeds"))
+
+    db.session.delete(feed)
+    db.session.commit()
+
+    flash("Feed bag deleted successfully.", "success")
+
+    return redirect(url_for("feeds"))
 
 @app.route("/sales", methods=["GET", "POST"])
 def sales():
@@ -602,6 +936,18 @@ def sales():
         sale.paid = not sale.on_credit
         sale.record_date = parse_record_date()
         db.session.add(sale)
+
+        # Record cash only for paid sales
+        if sale.paid:
+            cash = CashTransaction(
+                transaction_type="Income",
+                source="Egg Sale",
+                amount=sale.price,
+                reason="Egg sale income"
+            )
+
+            db.session.add(cash)
+
         db.session.commit()
         return redirect(url_for("sales"))
 
@@ -665,6 +1011,16 @@ def crate_sales():
         sale.price_per_crate = float(request.form["price_per_crate"])
 
         db.session.add(sale)
+
+        cash = CashTransaction(
+            transaction_type="Income",
+            source="Crate Sale",
+            amount=sale.crates * sale.price_per_crate,
+            reason="Crate sale income"
+        )
+
+        db.session.add(cash)
+
         db.session.commit()
 
         return redirect(url_for("crate_sales"))
@@ -1001,55 +1357,81 @@ def batch_feed(id):
 
     batch = ChickBatch.query.get_or_404(id)
 
-    # Automatically determine feed type from the batch stage
+    # Feed type required for this batch
     feed_type = {
-        "Starter": "Starter Feed",
-        "Grower": "Grower Feed",
-        "Finisher": "Finisher Feed",
-        "Layer": "Layers Mash"
-    }.get(batch.stage, "Starter Feed")
+        "Starter": "Starter",
+        "Grower": "Grower",
+        "Layer": "Layers Mash",
+        "Finisher": "Finisher"
+    }.get(batch.stage, "Starter")
 
     if request.method == "POST":
 
+        feed = Feed.query.get_or_404(
+            int(request.form["feed_id"])
+        )
+
         quantity = float(request.form["quantity"])
 
-        inventory = FeedInventory.query.filter_by(
-            feed_type=feed_type
-        ).first()
+        notes = request.form.get("notes", "")
 
-        if inventory is None:
-            return f"{feed_type} not found in inventory."
+        if quantity <= 0:
+            flash("Quantity must be greater than zero.", "danger")
+            return redirect(request.url)
 
-        if quantity > inventory.remaining_kg:
-            return f"Only {inventory.remaining_kg:.1f} kg of {feed_type} remaining."
+        if quantity > feed.remaining_kg:
+            flash(
+                f"Only {feed.remaining_kg:.1f} kg remaining in this bag.",
+                "danger"
+            )
+            return redirect(request.url)
 
-        feed = Feed.query.filter_by(
-            feed_type=feed_type
-        ).order_by(
-            Feed.record_date.desc(),
-            Feed.id.desc()
-        ).first()
+        # Deduct feed
+        feed.remaining_kg -= quantity
 
-        if feed:
-            cost_per_kg = feed.cost_per_bag / feed.bag_size
+        # Update status
+        if feed.remaining_kg <= 0:
+
+            feed.remaining_kg = 0
+            feed.status = "Finished"
+
+        elif feed.remaining_kg < feed.bag_size:
+
+            feed.status = "Half Used"
+
         else:
-            cost_per_kg = 0
 
+            feed.status = "Available"
+
+        # Record feed usage
         record = FeedRecord(
+
             batch_id=batch.id,
-            feed_type=feed_type,
+
+            feed_id=feed.id,
+
             quantity=quantity,
-            cost=quantity * cost_per_kg,
-            notes=request.form.get("notes", "")
+
+            cost=quantity * feed.cost_per_kg,
+
+            notes=notes
+
         )
 
         db.session.add(record)
-
-        inventory.remaining_kg -= quantity
-
         db.session.commit()
 
+        flash("Feed recorded successfully.", "success")
+
         return redirect(url_for("batch_feed", id=batch.id))
+
+    # Available feed bags
+    feed_bags = Feed.query.filter(
+        Feed.feed_type == feed_type,
+        Feed.remaining_kg > 0
+    ).order_by(
+        Feed.purchase_date.asc()
+    ).all()
 
     # Feed history
     records = FeedRecord.query.filter_by(
@@ -1058,29 +1440,36 @@ def batch_feed(id):
         FeedRecord.record_date.desc()
     ).all()
 
-    # Current inventory
-    inventory = FeedInventory.query.filter_by(
-        feed_type=feed_type
-    ).first()
-
-    remaining_feed = inventory.remaining_kg if inventory else 0
-
     total_feed = sum(r.quantity for r in records)
 
     total_cost = sum(r.cost for r in records)
 
+    remaining_feed = sum(
+        bag.remaining_kg
+        for bag in feed_bags
+    )
+
     return page(
+
         "Feed Batch",
+
         "batch_feed.html",
 
         batch=batch,
-        feed_type=feed_type,
-        records=records,
-        remaining_feed=remaining_feed,
-        total_feed=total_feed,
-        total_cost=total_cost,
-    )
 
+        feed_type=feed_type,
+
+        feed_bags=feed_bags,
+
+        records=records,
+
+        remaining_feed=remaining_feed,
+
+        total_feed=total_feed,
+
+        total_cost=total_cost,
+
+    )
 
 
 @app.route("/add_chick", methods=["GET", "POST"])
@@ -1217,7 +1606,7 @@ def notifications():
         })
 
     # Low feed stock
-    total_feed = sum(feed.quantity for feed in Feed.query.all())
+    total_feed = sum(feed.remaining_kg for feed in Feed.query.all())
 
     if total_feed < 100:
         notifications.append({
@@ -1400,8 +1789,6 @@ def farm_settings():
     )
 
 
-
-
 @app.route("/delete_reminder/<int:id>")
 def delete_reminder(id):
 
@@ -1445,6 +1832,35 @@ def check_reminders():
 
     return {"reminders": due}
 
+
+from sqlalchemy import func
+
+def total_cash_income():
+    egg_income = db.session.query(
+        func.coalesce(func.sum(Sale.quantity * Sale.price), 0)
+    ).scalar()
+
+    crate_income = db.session.query(
+        func.coalesce(func.sum(CrateSale.crates * CrateSale.price_per_crate), 0)
+    ).scalar()
+
+    return float(egg_income or 0) + float(crate_income or 0)
+
+
+def total_cash_withdrawn():
+    withdrawn = db.session.query(
+        func.coalesce(func.sum(CashTransaction.amount), 0)
+    ).filter(
+        CashTransaction.transaction_type == "Withdrawal"
+    ).scalar()
+
+    return float(withdrawn or 0)
+
+
+def get_available_cash():
+    return total_cash_income() - total_cash_withdrawn()
+
+
 @app.route("/receive-payment/<int:id>")
 def receive_payment():
 
@@ -1456,6 +1872,50 @@ def receive_payment():
 
     return redirect(url_for("credit_sales"))
 
+
+@app.route("/farm-cash", methods=["GET", "POST"])
+def farm_cash():
+
+    if request.method == "POST":
+        amount = float(request.form["amount"])
+        reason = request.form["reason"]
+        notes = request.form.get("notes", "")
+
+        if amount > get_available_cash():
+            flash("Not enough available cash.", "danger")
+            return redirect(url_for("farm_cash"))
+
+        transaction = CashTransaction(
+            transaction_type="Withdrawal",
+            source="Withdrawal",
+            amount=amount,
+            reason=reason,
+            notes=notes
+        )
+
+        db.session.add(transaction)
+        db.session.commit()
+
+        flash("Cash withdrawn successfully.", "success")
+        return redirect(url_for("farm_cash"))
+
+    income = total_cash_income()
+    withdrawn = total_cash_withdrawn()
+    balance = get_available_cash()
+
+    transactions = CashTransaction.query.order_by(
+        CashTransaction.transaction_date.desc(),
+        CashTransaction.id.desc()
+    ).all()
+
+    return page(
+        "Withdraw Cash",
+        "farm_cash.html",
+        income=income,
+        withdrawn=withdrawn,
+        balance=balance,
+        transactions=transactions
+    )
 
 
 with app.app_context():
@@ -1478,6 +1938,8 @@ with app.app_context():
 
     print("DATABASE CREATED")
 
+with app.app_context():
+    db.create_all()
 
 
 if __name__ == "__main__":
