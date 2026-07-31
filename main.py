@@ -214,7 +214,7 @@ class FeedRecord(db.Model):
         "Feed",
         back_populates="records"
     )
-    
+
 
 
 class FeedType(db.Model):
@@ -1098,17 +1098,20 @@ def chicks():
 
     for b in batches:
         b.feed_used = sum(
-            r.quantity for r in b.feed_records
+            r.quantity or 0 for r in b.feed_records
         )
 
         b.feed_cost = sum(
-            r.cost for r in b.feed_records
+            r.cost or 0 for r in b.feed_records
         )
 
     total = sum(x.quantity for x in batches)
-    alive = sum(x.alive for x in batches)
-    dead = sum(x.dead for x in batches)
-    sold = sum(x.sold for x in batches)
+
+    dead = sum(x.dead or 0 for x in batches)
+
+    sold = sum(x.sold or 0 for x in batches)
+
+    alive = total - dead - sold
 
     return page(
         "Chick Management",
