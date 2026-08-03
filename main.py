@@ -424,22 +424,21 @@ def dashboard():
             for x in crate_sales
         )
 
-        adjusted_eggs = sum(
-            x.quantity
-            for x in EggAdjustment.query.all()
-        )
+
 
         adjusted_eggs = sum(
             a.quantity
             for a in EggAdjustment.query.all()
         )
 
-        available_eggs = (
-                total_eggs
-                - individual_eggs_sold
-                - crate_eggs_sold
-                - adjusted_eggs
+        available_eggs = max(
+            0,
+            total_eggs
+            - individual_eggs_sold
+            - crate_eggs_sold
+            - adjusted_eggs
         )
+
         available_crates = available_eggs // 30
         remaining_eggs = available_eggs % 30
 
@@ -484,8 +483,10 @@ def dashboard():
         feed_stock = total_feed
 
         # Current chicks
-        total_chicks = sum(batch.alive for batch in ChickBatch.query.all())
-
+        total_chicks = sum(
+            (batch.quantity or 0) - (batch.dead or 0) - (batch.sold or 0)
+            for batch in ChickBatch.query.all()
+        )
 
         # ==========================
         # WEEKLY ANALYTICS
@@ -559,10 +560,10 @@ def dashboard():
             ).all()
         )
 
-        home_consumption = home_consumption,
-        broken_eggs = broken_eggs,
-        hatching = hatching,
-        spoiled = spoiled,
+        home_consumption = home_consumption
+        broken_eggs = broken_eggs
+        hatching = hatching
+        spoiled = spoiled
 
 
     except Exception as e:
