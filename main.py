@@ -44,8 +44,6 @@ class Egg(db.Model):
     record_date = db.Column(db.Date, default=date.today, nullable=False)
 
 
-
-
 class CrateSale(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     crates = db.Column(db.Integer, nullable=False)
@@ -55,9 +53,6 @@ class CrateSale(db.Model):
     @property
     def total(self):
         return self.crates * self.price_per_crate
-
-
-
 
 
 class Sale(db.Model):
@@ -194,9 +189,6 @@ class ChickBatch(db.Model):
         return round((self.dead / self.quantity) * 100, 1)
 
 
-
-
-
 class FeedRecord(db.Model):
     __tablename__ = "feed_record"
 
@@ -228,11 +220,9 @@ class FeedRecord(db.Model):
     )
 
 
-
 class FeedType(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True)
-
 
 
 class ChickDeath(db.Model):
@@ -258,7 +248,6 @@ class ChickDeath(db.Model):
     )
 
 
-
 class Reminder(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
@@ -273,7 +262,6 @@ class Reminder(db.Model):
     enabled = db.Column(db.Boolean, default=True)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
 
 
 class FarmSettings(db.Model):
@@ -330,9 +318,9 @@ class CashTransaction(db.Model):
     def __repr__(self):
         return f"<CashTransaction {self.transaction_type} {self.amount}>"
 
+
 @app.route("/credit-sales")
 def credit_sales():
-
     rows = Sale.query.filter_by(
         on_credit=True,
         paid=False
@@ -353,15 +341,12 @@ def credit_sales():
     )
 
 
-
 def parse_record_date():
     value = request.form.get("record_date") or str(date.today())
     return date.fromisoformat(value)
 
 
-
 def page(title, body, **context):
-
     notifications = []
 
     eggs_today = Egg.query.filter_by(record_date=date.today()).count()
@@ -397,7 +382,6 @@ def page(title, body, **context):
     )
 
 
-
 @app.route("/")
 def dashboard():
     try:
@@ -405,8 +389,6 @@ def dashboard():
         feeds = Feed.query.all()
         sales = Sale.query.all()
         crate_sales = CrateSale.query.all()
-
-
 
         # ==========================
         # EGG STATISTICS
@@ -435,8 +417,6 @@ def dashboard():
             x.crates * 30
             for x in crate_sales
         )
-
-
 
         adjusted_eggs = sum(
             a.quantity
@@ -477,12 +457,11 @@ def dashboard():
         # REVENUE
         # ==========================
         revenue = (
-            sum(x.total for x in sales)
-            +
-            sum(x.total for x in crate_sales)
+                sum(x.total for x in sales)
+                +
+                sum(x.total for x in crate_sales)
         )
         available_cash = get_available_cash()
-
 
         # Today's sales
         sales_today = (
@@ -514,7 +493,6 @@ def dashboard():
         weekly_sales = []
 
         for d in last_7_days:
-
             weekly_eggs.append(
                 sum(
                     x.quantity
@@ -581,6 +559,15 @@ def dashboard():
     except Exception as e:
         return f"Dashboard error: {e}"
 
+    print("===== DASHBOARD =====")
+    print("Total Eggs:", total_eggs)
+    print("Available Eggs:", available_eggs)
+    print("Total Chicks:", total_chicks)
+    print("Total Feed:", total_feed)
+    print("Revenue:", revenue)
+    print("=====================")
+
+
     return page(
         "Dashboard",
         "dashboard.html",
@@ -612,7 +599,7 @@ def dashboard():
         feed_inventory=feed_inventory,
         available_crates=available_crates,
         remaining_eggs=remaining_eggs,
-        )
+    )
 
 
 @app.route("/eggs", methods=["GET", "POST"])
@@ -672,7 +659,6 @@ def eggs():
             flash("Egg adjustment recorded.", "success")
 
             return redirect(url_for("eggs"))
-
 
     edit_id = request.args.get("edit", type=int)
     edit_record = Egg.query.get(edit_id) if edit_id else None
@@ -749,8 +735,6 @@ def eggs():
         if a.record_date == date.today()
     )
 
-
-
     return page(
         "Eggs",
         "eggs.html",
@@ -779,9 +763,9 @@ def delete_egg(id):
 from datetime import date
 from flask import request, redirect, url_for, flash, render_template
 
+
 @app.route("/feeds", methods=["GET", "POST"])
 def feeds():
-
     edit_id = request.args.get("edit", type=int)
     edit_record = db.session.get(Feed, edit_id) if edit_id else None
 
@@ -808,7 +792,7 @@ def feeds():
 
             if last:
                 number = int(last.bag_number.replace(prefix, ""))
-                feed.bag_number = f"{prefix}{number+1:03d}"
+                feed.bag_number = f"{prefix}{number + 1:03d}"
             else:
                 feed.bag_number = f"{prefix}001"
 
@@ -892,7 +876,6 @@ def feeds():
 
 @app.route("/delete_feed/<int:id>", methods=["POST"])
 def delete_feed(id):
-
     feed = Feed.query.get_or_404(id)
 
     if feed.records:
@@ -908,6 +891,7 @@ def delete_feed(id):
     flash("Feed bag deleted successfully.", "success")
 
     return redirect(url_for("feeds"))
+
 
 @app.route("/sales", methods=["GET", "POST"])
 def sales():
@@ -1085,7 +1069,6 @@ def inventory():
 
 @app.route("/chicks")
 def chicks():
-
     search = request.args.get("search", "")
     status = request.args.get("status", "")
 
@@ -1141,7 +1124,6 @@ def chicks():
 
 @app.route("/record_death/<int:id>", methods=["GET", "POST"])
 def record_death(id):
-
     batch = ChickBatch.query.get_or_404(id)
 
     if request.method == "POST":
@@ -1368,9 +1350,9 @@ Cancel
 
     return page("Edit Chick Batch", body)
 
+
 @app.route("/batch-feed/<int:id>", methods=["GET", "POST"])
 def batch_feed(id):
-
     batch = ChickBatch.query.get_or_404(id)
 
     # Feed type required for this batch
@@ -1542,7 +1524,7 @@ def add_chick():
 
         <label>Supplier</label><br>
         <input type="text" name="supplier" required><br><br>
-        
+
         <label>Batch Photo</label>
 
         <input type="file" name="photo" accept="image/*">
@@ -1558,7 +1540,7 @@ def add_chick():
 
         <label>Buying Price (per chick)</label><br>
         <input type="number" step="0.01" name="buying_price" required><br><br>
-      
+
         <label>Stage</label><br>
 
         <select name="stage" required>
@@ -1567,7 +1549,7 @@ def add_chick():
         <option value="Layer">Layer</option>
         <option value="Broiler">Broiler</option>
         </select><br><br>
-      
+
         <label>Stage</label><br>
 
         <select name="stage" required>
@@ -1580,7 +1562,7 @@ def add_chick():
 
         <label>Notes</label><br>
         <textarea name="notes" rows="4"></textarea><br><br>
-        
+
         <label>Notes</label><br>
         <textarea name="notes" rows="4"></textarea><br><br>
 
@@ -1596,8 +1578,6 @@ def add_chick():
     return page("Add Chick Batch", body)
 
 
-
-
 @app.route("/delete_chick/<int:id>", methods=["POST"])
 def delete_chick(id):
     chick = ChickBatch.query.get_or_404(id)
@@ -1607,9 +1587,9 @@ def delete_chick(id):
 
     return redirect(url_for("chicks"))
 
+
 @app.route("/notifications")
 def notifications():
-
     notifications = []
 
     # Eggs not recorded today
@@ -1679,7 +1659,6 @@ def notifications():
 
 @app.route("/reminders")
 def reminders():
-
     rows = Reminder.query.order_by(
         Reminder.reminder_date,
         Reminder.reminder_time
@@ -1691,11 +1670,10 @@ def reminders():
         rows=rows
     )
 
+
 @app.route("/add_reminder", methods=["GET", "POST"])
 def add_reminder():
-
     if request.method == "POST":
-
         reminder = Reminder(
             title=request.form["title"],
             description=request.form.get("description", ""),
@@ -1727,11 +1705,9 @@ def add_reminder():
 
 @app.route("/edit_reminder/<int:id>", methods=["GET", "POST"])
 def edit_reminder(id):
-
     reminder = Reminder.query.get_or_404(id)
 
     if request.method == "POST":
-
         reminder.title = request.form["title"]
 
         reminder.description = request.form.get(
@@ -1765,9 +1741,9 @@ def edit_reminder(id):
         reminder=reminder
     )
 
+
 @app.route("/toggle_reminder/<int:id>")
 def toggle_reminder(id):
-
     reminder = Reminder.query.get_or_404(id)
 
     reminder.enabled = not reminder.enabled
@@ -1777,16 +1753,11 @@ def toggle_reminder(id):
     return redirect(url_for("reminders"))
 
 
-
-
-
 @app.route("/farm-settings", methods=["GET", "POST"])
 def farm_settings():
-
     settings = FarmSettings.query.first()
 
     if request.method == "POST":
-
         settings.egg_target = int(request.form["egg_target"])
         settings.chick_capacity = int(request.form["chick_capacity"])
         settings.feed_capacity = int(request.form["feed_capacity"])
@@ -1807,7 +1778,6 @@ def farm_settings():
 
 @app.route("/delete_reminder/<int:id>")
 def delete_reminder(id):
-
     reminder = Reminder.query.get_or_404(id)
 
     db.session.delete(reminder)
@@ -1818,9 +1788,9 @@ def delete_reminder(id):
 
 from datetime import datetime
 
+
 @app.route("/check-reminders")
 def check_reminders():
-
     now = datetime.now()
 
     today = now.date()
@@ -1840,7 +1810,6 @@ def check_reminders():
             reminder_time = r.reminder_time.replace(second=0, microsecond=0)
 
             if reminder_time == current_time:
-
                 due.append({
                     "title": r.title,
                     "description": r.description
@@ -1850,6 +1819,7 @@ def check_reminders():
 
 
 from sqlalchemy import func
+
 
 def total_cash_income():
     egg_income = db.session.query(
@@ -1879,7 +1849,6 @@ def get_available_cash():
 
 @app.route("/receive-payment/<int:id>")
 def receive_payment():
-
     sale = Sale.query.get_or_404(id)
 
     sale.paid = True
@@ -1891,7 +1860,6 @@ def receive_payment():
 
 @app.route("/farm-cash", methods=["GET", "POST"])
 def farm_cash():
-
     if request.method == "POST":
         amount = float(request.form["amount"])
         reason = request.form["reason"]
@@ -1935,11 +1903,9 @@ def farm_cash():
 
 
 with app.app_context():
-
     db.create_all()
 
     if FarmSettings.query.first() is None:
-
         settings = FarmSettings(
             egg_target=70,
             chick_capacity=100,
@@ -1962,8 +1928,7 @@ with app.app_context():
 
     print("Eggs:", Egg.query.count())
     print("Chicks:", ChickBatch.query.count())
-    print("Feeds:", Feed.query.count())    
-
+    print("Feeds:", Feed.query.count())
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
