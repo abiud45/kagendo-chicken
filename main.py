@@ -4,8 +4,14 @@ from datetime import date, datetime, time, timedelta
 import os
 from werkzeug.utils import secure_filename
 
+import os
+
 app = Flask(__name__, template_folder="templates")
-app.secret_key = "change-this-to-a-random-secret-key"
+
+app.secret_key = os.environ.get(
+    "SECRET_KEY",
+    "change-this-to-a-random-secret-key"
+)
 
 app.config["UPLOAD_FOLDER"] = os.path.join(
     "static",
