@@ -20,6 +20,12 @@ app.config["UPLOAD_FOLDER"] = os.path.join(
 )
 
 uri = os.environ.get("DATABASE_URL", "sqlite:///kagendo.db")
+uri = os.environ.get("DATABASE_URL")
+
+print("DATABASE_URL exists:", uri is not None)
+
+if not uri:
+    raise RuntimeError("DATABASE_URL environment variable is missing!")
 
 if uri.startswith("postgres://"):
     uri = uri.replace("postgres://", "postgresql://", 1)
