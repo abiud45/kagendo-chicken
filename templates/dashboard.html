@@ -29,43 +29,37 @@
 
     <!-- EGGS -->
 
-    <article class="dashboard-card eggs-card">
+<div class="dashboard-card eggs-card">
 
-        <h3>Egg Production</h3>
+    <div class="card-icon">🥚</div>
 
-        <h1>
-            {{ total_eggs }}
-        </h1>
+    <h3>Current Egg Stock</h3>
 
-        <p>Total Eggs</p>
+    <div class="card-number">
+        {{ available_eggs }}
+    </div>
 
+    <div class="card-label">
+        Eggs Available
+    </div>
 
-        <div class="card-info">
+    <hr>
 
-            <span>
-                Today:
-                <strong>
-                    {{ eggs_today }}
-                </strong>
-            </span>
+    <div class="egg-breakdown">
 
-
-            <span>
-                Available:
-                <strong>
-                    {{ available_eggs }}
-                </strong>
-            </span>
-
-
-            <span>
-                Crates:
-                <strong>
-                    {{ available_crates }}
-                </strong>
-            </span>
-
+        <div class="egg-item">
+            <span>📦 Crates Available</span>
+            <strong>{{ available_crates }}</strong>
         </div>
+
+        <div class="egg-item">
+            <span>🥚 Loose Eggs</span>
+            <strong>{{ remaining_eggs }}</strong>
+        </div>
+
+    </div>
+
+</div>
 
 
     </article>
