@@ -33,6 +33,11 @@ if uri.startswith("postgres://"):
 app.config["SQLALCHEMY_DATABASE_URI"] = uri
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 300,
+}
+
 print("DATABASE:", uri)
 
 db = SQLAlchemy(app)
