@@ -1850,6 +1850,8 @@ def check_reminders():
     return {"reminders": due}
 
 
+import traceback
+
 def send_push_notification(token, title, body):
     try:
         message = messaging.Message(
@@ -1871,17 +1873,8 @@ def send_push_notification(token, title, body):
         print("Notification sent:", response)
         return True
 
-
-    except Exception as e:
-
-        import traceback
-
-        print("========== FIREBASE ERROR ==========")
-
+    except Exception:
         traceback.print_exc()
-
-        print("===================================")
-
         return False
 
 from sqlalchemy import func
