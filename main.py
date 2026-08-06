@@ -297,6 +297,12 @@ class CashWithdrawal(db.Model):
     withdrawal_date = db.Column(db.Date, default=date.today)
     notes = db.Column(db.Text)
 
+class DeviceToken(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(300), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 
 class CashTransaction(db.Model):
     __tablename__ = "cash_transaction"
@@ -333,6 +339,8 @@ class CashTransaction(db.Model):
 
     def __repr__(self):
         return f"<CashTransaction {self.transaction_type} {self.amount}>"
+
+
 
 
 @app.route("/test-notification")
@@ -1686,6 +1694,24 @@ def notifications():
         """,
         notifications=notifications
     )
+
+
+@app.route("/register-token", methods=["POST"])
+def register_token():
+    data = request.get_json()
+
+    if not data or "token" not in data:
+        return {"success": False, "message": "No token provided"}, 400
+
+    token = data["token"]
+
+    existing = DeviceToken.query.filter_by(token=token).first()
+
+    if not existing:
+        db.session.add(DeviceToken(token=token))
+        db.session.commit()
+
+    return {"success": True}
 
 
 @app.route("/reminders")
