@@ -51,23 +51,7 @@ print("DATABASE:", uri)
 
 db = SQLAlchemy(app)
 
-def send_push_notification(token, title, body):
-    try:
-        message = messaging.Message(
-            notification=messaging.Notification(
-                title=title,
-                body=body
-            ),
-            token=token
-        )
 
-        response = messaging.send(message)
-        print("Notification sent:", response)
-        return True
-
-    except Exception as e:
-        print("Notification error:", e)
-        return False
 
 
 class Egg(db.Model):
@@ -1864,6 +1848,32 @@ def check_reminders():
                 })
 
     return {"reminders": due}
+
+
+def send_push_notification(token, title, body):
+    try:
+        message = messaging.Message(
+            notification=messaging.Notification(
+                title=title,
+                body=body
+            ),
+            data={
+                "title": title,
+                "body": body
+            },
+            android=messaging.AndroidConfig(
+                priority="high"
+            ),
+            token=token
+        )
+
+        response = messaging.send(message)
+        print("Notification sent:", response)
+        return True
+
+    except Exception as e:
+        print("Notification error:", e)
+        return False
 
 
 from sqlalchemy import func
