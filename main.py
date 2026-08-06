@@ -643,6 +643,7 @@ def dashboard():
 
 @app.route("/eggs", methods=["GET", "POST"])
 def eggs():
+
     if request.method == "POST":
 
         form_type = request.form.get("form_type", "collection")
@@ -661,8 +662,37 @@ def eggs():
             db.session.add(egg)
             db.session.commit()
 
-            flash("Egg collection recorded successfully.", "success")
+            # Today's total collection
+            today_total = sum(
+                e.quantity
+                for e in Egg.query.filter_by(record_date=date.today()).all()
+            )
 
+            settings = FarmSettings.query.first()
+            target = settings.egg_target if settings else 70
+
+            already_sent = NotificationLog.query.filter_by(
+                notification_type="egg_target",
+                log_date=date.today()
+            ).first()
+
+            if today_total >= target and not already_sent:
+
+                send_push_notification(
+                    "🥚 Egg Target Achieved",
+                    f"Today's collection is {today_total} eggs. Target: {target} eggs. Great job!"
+                )
+
+                db.session.add(
+                    NotificationLog(
+                        notification_type="egg_target",
+                        log_date=date.today()
+                    )
+                )
+
+                db.session.commit()
+
+            flash("Egg collection recorded successfully.", "success")
             return redirect(url_for("eggs"))
 
         # ==========================
@@ -683,7 +713,6 @@ def eggs():
 
             if quantity > available:
                 flash("Not enough eggs available.", "danger")
-
                 return redirect(url_for("eggs"))
 
             adjustment = EggAdjustment(
@@ -696,7 +725,6 @@ def eggs():
             db.session.commit()
 
             flash("Egg adjustment recorded.", "success")
-
             return redirect(url_for("eggs"))
 
     edit_id = request.args.get("edit", type=int)
@@ -743,16 +771,13 @@ def eggs():
     )
 
     available_eggs = (
-            total_eggs
-            - individual_sold
-            - crate_sold
-            - adjusted_eggs
+        total_eggs
+        - individual_sold
+        - crate_sold
+        - adjusted_eggs
     )
 
-    # ==========================
-    # WEEKLY EGG USAGE PERCENTAGE
-    # ==========================
-
+    # Weekly egg usage percentage
     if total_eggs > 0:
         usage_percent = round(
             (weekly_adjustments / total_eggs) * 100
@@ -760,7 +785,6 @@ def eggs():
     else:
         usage_percent = 0
 
-    # Egg Statistics
     eggs_sold = individual_sold + crate_sold
 
     collection_today = sum(
@@ -786,9 +810,26 @@ def eggs():
         adjusted_eggs=adjusted_eggs,
         weekly_adjustments=weekly_adjustments,
         usage_percent=usage_percent,
+
         available_eggs=available_eggs,
-        total_eggs=total_eggs
+        total_eggs=total_eggs,
+
+        eggs_sold=eggs_sold,
+        collection_today=collection_today,
+        adjustments_today=adjustments_today
     )
+
+
+class NotificationLog(db.Model):
+    __tablename__ = "notification_log"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    notification_type = db.Column(db.String(50), nullable=False)
+
+    log_date = db.Column(db.Date, nullable=False)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 @app.route("/delete-egg/<int:id>", methods=["POST"])
