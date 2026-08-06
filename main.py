@@ -1871,10 +1871,18 @@ def send_push_notification(token, title, body):
         print("Notification sent:", response)
         return True
 
-    except Exception as e:
-        print("Notification error:", e)
-        return False
 
+    except Exception as e:
+
+        import traceback
+
+        print("========== FIREBASE ERROR ==========")
+
+        traceback.print_exc()
+
+        print("===================================")
+
+        return False
 
 from sqlalchemy import func
 
