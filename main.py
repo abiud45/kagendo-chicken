@@ -346,11 +346,9 @@ class CashTransaction(db.Model):
 @app.route("/test-notification")
 def test_notification():
 
-    token = "eGG48vCkSruwUNtrwD0-Ak:APA91bFZrjU71tL9sNcQ3lEomRtomlZyE7gP6oWYskRML4MFOB2Ekz56aue-Ol18EqPutknrqIXjKdGPuMHQgBALI-x5CbdAzlmanjPmvi1i1pOVr91aGpA"
     success = send_push_notification(
-        token,
         "Kagendo Chicken",
-        "🎉 Your Flask backend is now connected to Firebase!"
+        "🎉 Automatic notifications are working!"
     )
 
     if success:
@@ -1877,30 +1875,30 @@ def check_reminders():
 
 import traceback
 
-def send_push_notification(token, title, body):
+def send_push_notification(title, body):
     try:
+        device = DeviceToken.query.order_by(DeviceToken.id.desc()).first()
+
+        if not device:
+            print("No registered device found.")
+            return False
+
         message = messaging.Message(
             notification=messaging.Notification(
                 title=title,
                 body=body
             ),
-            data={
-                "title": title,
-                "body": body
-            },
-            android=messaging.AndroidConfig(
-                priority="high"
-            ),
-            token=token
+            token=device.token
         )
 
         response = messaging.send(message)
         print("Notification sent:", response)
         return True
 
-    except Exception:
-        traceback.print_exc()
+    except Exception as e:
+        print("Notification error:", e)
         return False
+
 
 from sqlalchemy import func
 
