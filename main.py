@@ -2,11 +2,20 @@ from flask import Flask, render_template, render_template_string, request, redir
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date, datetime, time, timedelta
 import os
+import json
+import firebase_admin
+from firebase_admin import credentials, messaging
 from werkzeug.utils import secure_filename
 
-import os
+
 
 app = Flask(__name__, template_folder="templates")
+# Initialize Firebase
+firebase_json = os.getenv("FIREBASE_SERVICE_ACCOUNT")
+
+if firebase_json and not firebase_admin._apps:
+    cred = credentials.Certificate(json.loads(firebase_json))
+    firebase_admin.initialize_app(cred)
 
 app.secret_key = os.environ.get(
     "SECRET_KEY",
@@ -41,6 +50,24 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 print("DATABASE:", uri)
 
 db = SQLAlchemy(app)
+
+def send_push_notification(token, title, body):
+    try:
+        message = messaging.Message(
+            notification=messaging.Notification(
+                title=title,
+                body=body
+            ),
+            token=token
+        )
+
+        response = messaging.send(message)
+        print("Notification sent:", response)
+        return True
+
+    except Exception as e:
+        print("Notification error:", e)
+        return False
 
 
 class Egg(db.Model):
@@ -323,6 +350,22 @@ class CashTransaction(db.Model):
     def __repr__(self):
         return f"<CashTransaction {self.transaction_type} {self.amount}>"
 
+
+@app.route("/test-notification")
+def test_notification():
+
+    token = "cdlg8qCATPS32OjW9ecfeW:APA91bESTV40HVsYJCnz2ybJ8as5IG6q64_gxT9B0xeJDM6w3ScQSU2PFfaB4_qmKBm0q3Cg_90RufeS_TgeTm5sOycLCaFP8agtBDGXb4YN3POfBzCONJ0"
+
+    success = send_push_notification(
+        token,
+        "Kagendo Chicken",
+        "🎉 Your Flask backend is now connected to Firebase!"
+    )
+
+    if success:
+        return "Notification sent!"
+    else:
+        return "Failed to send notification."
 
 @app.route("/credit-sales")
 def credit_sales():
