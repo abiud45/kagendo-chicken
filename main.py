@@ -338,8 +338,7 @@ class CashTransaction(db.Model):
 @app.route("/test-notification")
 def test_notification():
 
-    token = "cdlg8qCATPS32OjW9ecfeW:APA91bESTV40HVsYJCnz2ybJ8as5IG6q64_gxT9B0xeJDM6w3ScQSU2PFfaB4_qmKBm0q3Cg_90RufeS_TgeTm5sOycLCaFP8agtBDGXb4YN3POfBzCONJ0"
-
+    token = "eGG48vCkSruwUNtrwD0-Ak:APA91bFZrjU71tL9sNcQ3lEomRtomlZyE7gP6oWYskRML4MFOB2Ekz56aue-Ol18EqPutknrqIXjKdGPuMHQgBALI-x5CbdAzlmanjPmvi1i1pOVr91aGpA"
     success = send_push_notification(
         token,
         "Kagendo Chicken",
