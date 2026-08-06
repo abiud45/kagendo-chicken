@@ -135,6 +135,8 @@ class Feed(db.Model):
 
     remaining_kg = db.Column(db.Float, nullable=False)
 
+    low_feed_alert_sent = db.Column(db.Boolean, default=False)
+
     cost_per_bag = db.Column(db.Float, nullable=False)
 
     status = db.Column(db.String(20), default="Available")
@@ -1423,6 +1425,18 @@ def batch_feed(id):
 
         # Deduct feed
         feed.remaining_kg -= quantity
+        LOW_FEED_THRESHOLD = 50
+
+        if (
+                feed.remaining_kg <= LOW_FEED_THRESHOLD
+                and not feed.low_feed_alert_sent
+        ):
+            send_push_notification(
+                "⚠️ Feed Running Low",
+                f"{feed.feed_type} ({feed.bag_number}) has only {feed.remaining_kg:.1f} kg remaining. Please restock."
+            )
+
+            feed.low_feed_alert_sent = True
 
         # Update status
         if feed.remaining_kg <= 0:
