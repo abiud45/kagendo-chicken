@@ -717,6 +717,12 @@ def eggs():
             db.session.add(egg)
             db.session.commit()
 
+            # Notify phone about new egg collection
+            send_push_notification(
+                "🥚 Egg Collection Recorded",
+                f"{egg.quantity} eggs have been recorded for {egg.record_date}."
+            )
+
             # Today's total collection
             today_total = sum(
                 e.quantity
