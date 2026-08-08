@@ -359,7 +359,30 @@ class FCMToken(db.Model):
         default=datetime.utcnow
     )
 
+class AppNotification(db.Model):
+    __tablename__ = "app_notification"
 
+    id = db.Column(db.Integer, primary_key=True)
+
+    title = db.Column(db.String(150), nullable=False)
+
+    message = db.Column(db.Text, nullable=False)
+
+    notification_type = db.Column(
+        db.String(50),
+        nullable=False
+    )
+
+    is_read = db.Column(
+        db.Boolean,
+        default=False,
+        nullable=False
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
 
 class CashTransaction(db.Model):
     __tablename__ = "cash_transaction"
@@ -1679,20 +1702,80 @@ def batch_feed(id):
             )
             return redirect(request.url)
 
+        # ==========================================
         # Deduct feed
+        # ==========================================
+
         feed.remaining_kg -= quantity
+
+        # Prevent negative values
+        if feed.remaining_kg < 0:
+            feed.remaining_kg = 0
+
         LOW_FEED_THRESHOLD = 50
 
+        # ==========================================
+        # FEED FINISHED NOTIFICATION
+        # ==========================================
+
         if (
+                feed.remaining_kg <= 0
+                and not feed.feed_finished_alert_sent
+        ):
+
+            send_push_notification(
+                "🛑 Feed Bag Finished",
+                f"{feed.feed_type} ({feed.bag_number}) is finished. "
+                "Please add a new feed bag."
+            )
+
+            db.session.add(
+                NotificationLog(
+                    notification_type="feed_finished",
+                    log_date=date.today()
+                )
+            )
+
+            feed.feed_finished_alert_sent = True
+
+
+        # ==========================================
+        # LOW FEED NOTIFICATION
+        # ==========================================
+
+        elif (
                 feed.remaining_kg <= LOW_FEED_THRESHOLD
                 and not feed.low_feed_alert_sent
         ):
+
             send_push_notification(
                 "⚠️ Feed Running Low",
-                f"{feed.feed_type} ({feed.bag_number}) has only {feed.remaining_kg:.1f} kg remaining. Please restock."
+                f"{feed.feed_type} ({feed.bag_number}) has only "
+                f"{feed.remaining_kg:.1f} kg remaining. Please restock.",
+                "feed_low"
+            )
+
+            db.session.add(
+                NotificationLog(
+                    notification_type="feed_low",
+                    log_date=date.today()
+                )
             )
 
             feed.low_feed_alert_sent = True
+
+            if feed.remaining_kg <= 0:
+
+                feed.remaining_kg = 0
+                feed.status = "Finished"
+
+            elif feed.remaining_kg < feed.bag_size:
+
+                feed.status = "Half Used"
+
+            else:
+
+                feed.status = "Available"
 
         # Update status
         if feed.remaining_kg <= 0:
@@ -2206,29 +2289,62 @@ def send_test_notification():
 
 import traceback
 
-def send_push_notification(title, body):
-    try:
-        device = DeviceToken.query.order_by(DeviceToken.id.desc()).first()
+def send_push_notification(title, message, notification_type="general"):
+    """
+    Send Firebase push notification
+    AND save notification inside Kagendo Chicken.
+    """
 
-        if not device:
-            print("No registered device found.")
-            return False
+    # ==========================================
+    # 1. SAVE IN-APP NOTIFICATION
+    # ==========================================
 
-        message = messaging.Message(
-            notification=messaging.Notification(
-                title=title,
-                body=body
-            ),
-            token=device.token
-        )
+    notification = AppNotification(
+        title=title,
+        message=message,
+        notification_type=notification_type
+    )
 
-        response = messaging.send(message)
-        print("Notification sent:", response)
-        return True
+    db.session.add(notification)
+    db.session.commit()
 
-    except Exception as e:
-        print("Notification error:", e)
-        return False
+    # ==========================================
+    # 2. GET REGISTERED FCM TOKENS
+    # ==========================================
+
+    tokens = DeviceToken.query.all()
+
+    if not tokens:
+        print("No registered FCM devices.")
+        return
+
+    # ==========================================
+    # 3. SEND PUSH NOTIFICATION
+    # ==========================================
+
+    for device in tokens:
+
+        try:
+
+            firebase_message = messaging.Message(
+                notification=messaging.Notification(
+                    title=title,
+                    body=message
+                ),
+                token=device.token
+            )
+
+            response = messaging.send(firebase_message)
+
+            print(
+                f"Notification sent to device: {response}"
+            )
+
+        except Exception as e:
+
+            print(
+                f"Notification failed: {e}"
+            )
 
 
 from sqlalchemy import func
