@@ -914,6 +914,9 @@ def feeds():
 
         feed = edit_record if edit_record else Feed()
 
+        # Remember the previous stock level
+        previous_remaining_kg = feed.remaining_kg if edit_record else None
+
         if not edit_record:
 
             feed_type = request.form["feed_type"]
@@ -962,6 +965,157 @@ def feeds():
 
         db.session.add(feed)
         db.session.commit()
+
+        # ==========================
+        # Feed Low Stock Notification
+        # ==========================
+
+        if feed.remaining_kg <= 10:
+
+            already_sent = NotificationLog.query.filter_by(
+                notification_type="feed_low_stock",
+                log_date=date.today()
+            ).first()
+
+            if not already_sent:
+                send_push_notification(
+                    "🌾 Feed Stock Low",
+                    f"{feed.feed_type} ({feed.bag_number}) has only "
+                    f"{feed.remaining_kg:.1f} kg remaining."
+                )
+
+                db.session.add(
+                    NotificationLog(
+                        notification_type="feed_low_stock",
+                        log_date=date.today()
+                    )
+                )
+
+                db.session.commit()
+
+                # ==========================
+                # Smart Feed Low Stock Alert
+                # ==========================
+
+                if feed.remaining_kg <= 10:
+
+                    # New feed bag: alert if it starts at low stock
+                    new_low_stock = (
+                            previous_remaining_kg is None
+                    )
+
+                    # Existing bag: alert only when it crosses
+                    # from above 10 kg to 10 kg or below
+                    crossed_low_stock = (
+                            previous_remaining_kg is not None
+                            and previous_remaining_kg > 10
+                            and feed.remaining_kg <= 10
+                    )
+
+                    if new_low_stock or crossed_low_stock:
+
+                        already_sent = NotificationLog.query.filter_by(
+                            notification_type=f"feed_low_stock_{feed.id}",
+                            log_date=date.today()
+                        ).first()
+
+                        if not already_sent:
+                            send_push_notification(
+                                "🌾 Feed Stock Low",
+                                f"{feed.feed_type} ({feed.bag_number}) has only "
+                                f"{feed.remaining_kg:.1f} kg remaining."
+                            )
+
+                            db.session.add(
+                                NotificationLog(
+                                    notification_type=f"feed_low_stock_{feed.id}",
+                                    log_date=date.today()
+                                )
+                            )
+
+                            db.session.commit()
+
+        # ==========================================
+        # FEED NOTIFICATIONS
+        # ==========================================
+
+        # Notify when a NEW feed bag is added
+        if not edit_record:
+            send_push_notification(
+                "🌾 Feed Added",
+                f"{feed.feed_type} ({feed.bag_number}) has been added to feed inventory. "
+                f"Quantity: {feed.remaining_kg:.1f} kg."
+            )
+
+        # Notify when feed is low
+        if feed.remaining_kg <= 10 and feed.remaining_kg > 0:
+            send_push_notification(
+                "⚠️ Low Feed Stock",
+                f"{feed.feed_type} ({feed.bag_number}) has only "
+                f"{feed.remaining_kg:.1f} kg remaining."
+            )
+
+        # Notify when feed is completely finished
+        if feed.remaining_kg == 0:
+            send_push_notification(
+                "🚨 Feed Depleted",
+                f"{feed.feed_type} ({feed.bag_number}) is finished. "
+                "Consider adding new feed."
+            )
+
+            # ==========================================
+            # FEED INVENTORY NOTIFICATIONS
+            # ==========================================
+
+            # Low stock notification
+            if feed.remaining_kg <= 10 and feed.remaining_kg > 0:
+
+                already_sent = NotificationLog.query.filter_by(
+                    notification_type="feed_low_stock",
+                    reference_id=feed.id
+                ).first()
+
+                if not already_sent:
+                    send_push_notification(
+                        "🌾 Feed Running Low",
+                        f"{feed.bag_number} ({feed.feed_type}) has only "
+                        f"{feed.remaining_kg:.1f} kg remaining."
+                    )
+
+                    db.session.add(
+                        NotificationLog(
+                            notification_type="feed_low_stock",
+                            reference_id=feed.id,
+                            log_date=date.today()
+                        )
+                    )
+
+                    db.session.commit()
+
+
+            # Feed finished notification
+            elif feed.remaining_kg == 0:
+
+                already_sent = NotificationLog.query.filter_by(
+                    notification_type="feed_finished",
+                    reference_id=feed.id
+                ).first()
+
+                if not already_sent:
+                    send_push_notification(
+                        "⚠️ Feed Finished",
+                        f"{feed.bag_number} ({feed.feed_type}) is finished."
+                    )
+
+                    db.session.add(
+                        NotificationLog(
+                            notification_type="feed_finished",
+                            reference_id=feed.id,
+                            log_date=date.today()
+                        )
+                    )
+
+                    db.session.commit()
 
         flash(
             "Feed updated successfully."
