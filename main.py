@@ -1754,17 +1754,28 @@ def notifications():
 def register_token():
     data = request.get_json()
 
+    if not data:
+        return jsonify({
+            "success": False,
+            "error": "No data received"
+        }), 400
+
     token = data.get("token")
 
     if not token:
-        return jsonify({"error": "Token missing"}), 400
+        return jsonify({
+            "success": False,
+            "error": "FCM token missing"
+        }), 400
 
-    print("FCM TOKEN RECEIVED:", token)
+    print("================================")
+    print("FCM TOKEN RECEIVED:")
+    print(token)
+    print("================================")
 
-    # For now, just confirm that Flask received it
     return jsonify({
         "success": True,
-        "message": "FCM token registered"
+        "message": "FCM token received"
     }), 200
 
 
