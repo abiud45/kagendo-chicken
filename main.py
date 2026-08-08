@@ -28,6 +28,7 @@ firebase_credentials = credentials.Certificate({
     "project_id": os.environ.get("FIREBASE_PROJECT_ID"),
     "private_key": firebase_private_key,
     "client_email": os.environ.get("FIREBASE_CLIENT_EMAIL"),
+    "token_uri": "https://oauth2.googleapis.com/token",
 })
 
 if not firebase_admin._apps:
