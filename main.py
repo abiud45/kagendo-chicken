@@ -1,5 +1,6 @@
 from flask import Flask, render_template, render_template_string, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
+from flask import request, jsonify
 from datetime import date, datetime, time, timedelta
 import os
 import json
@@ -1753,18 +1754,18 @@ def notifications():
 def register_token():
     data = request.get_json()
 
-    if not data or "token" not in data:
-        return {"success": False, "message": "No token provided"}, 400
+    token = data.get("token")
 
-    token = data["token"]
+    if not token:
+        return jsonify({"error": "Token missing"}), 400
 
-    existing = DeviceToken.query.filter_by(token=token).first()
+    print("FCM TOKEN RECEIVED:", token)
 
-    if not existing:
-        db.session.add(DeviceToken(token=token))
-        db.session.commit()
-
-    return {"success": True}
+    # For now, just confirm that Flask received it
+    return jsonify({
+        "success": True,
+        "message": "FCM token registered"
+    }), 200
 
 
 @app.route("/reminders")
