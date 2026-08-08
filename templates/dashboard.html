@@ -1,9 +1,31 @@
-<div class="page-container">
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="page">
+
+    <!-- =========================================
+         DASHBOARD HEADER
+    ========================================== -->
+
+    <div class="dashboard-header">
+
+        <div class="floating-logo">
+
+            {% if farm_logo %}
+                <img src="{{ farm_logo }}" alt="Kagendo Chicken">
+            {% else %}
+                🐔
+            {% endif %}
+
+        </div>
+
+    </div>
 
 
-<!-- DASHBOARD HEADER -->
-
-<section class="dashboard-header">
+    <!-- =========================================
+         WELCOME
+    ========================================== -->
 
     <div class="welcome-logo">
 
@@ -17,381 +39,790 @@
 
     </div>
 
-</section>
+
+    <!-- =========================================
+         MAIN DASHBOARD CARDS
+    ========================================== -->
+
+    <div class="dashboard-cards">
 
 
+        <!-- =====================================
+             EGGS
+        ====================================== -->
+
+        <a
+            href="{{ url_for('eggs') }}"
+            class="card-link"
+        >
+
+            <article class="dashboard-card eggs-card">
+
+                <div class="card-top">
+
+                    <div class="card-icon">
+                        🥚
+                    </div>
+
+                    <span class="card-status">
+                        LIVE
+                    </span>
+
+                </div>
 
 
-<!-- SUMMARY CARDS -->
+                <div class="card-label">
+                    CURRENT EGG STOCK
+                </div>
 
-<section class="dashboard-cards">
+
+                <h2>
+                    {{ available_eggs }}
+                </h2>
 
 
-    <!-- EGGS -->
+                <p class="card-description">
+                    Eggs currently available
+                </p>
 
-<div class="dashboard-card eggs-card">
 
-    <div class="card-icon">🥚</div>
+                <div class="egg-breakdown">
 
-    <h3>Current Egg Stock</h3>
+                    <div class="egg-item">
 
-  <div class="card-number">
-    Eggs={{ available_eggs }}
-</div>
+                        <span>
+                            📦 Crates
+                        </span>
 
-    <div class="card-label">
-        Eggs Available
+                        <strong>
+                            {{ available_crates }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="egg-item">
+
+                        <span>
+                            🥚 Loose
+                        </span>
+
+                        <strong>
+                            {{ remaining_eggs }}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <span class="card-action">
+                    Manage eggs →
+                </span>
+
+            </article>
+
+        </a>
+
+
+        <!-- =====================================
+             FARM CASH
+        ====================================== -->
+
+        <a
+            href="{{ url_for('farm_cash') }}"
+            class="card-link"
+        >
+
+            <article class="dashboard-card cash-card">
+
+                <div class="card-top">
+
+                    <div class="card-icon">
+                        💰
+                    </div>
+
+                    <span class="card-status">
+                        AVAILABLE
+                    </span>
+
+                </div>
+
+
+                <div class="card-label">
+                    FARM CASH
+                </div>
+
+
+                <h2>
+                    KSh {{ "{:,.0f}".format(available_cash) }}
+                </h2>
+
+
+                <p class="card-description">
+                    Cash currently available
+                </p>
+
+
+                <div class="card-info">
+
+                    <span>
+                        Income
+                    </span>
+
+                    <strong>
+                        KSh {{ "{:,.0f}".format(revenue) }}
+                    </strong>
+
+                </div>
+
+
+                <span class="card-action">
+                    Manage cash →
+                </span>
+
+            </article>
+
+        </a>
+
+
+        <!-- =====================================
+             FEED
+        ====================================== -->
+
+        <a
+            href="{{ url_for('feeds') }}"
+            class="card-link"
+        >
+
+            <article class="dashboard-card feed-card">
+
+                <div class="card-top">
+
+                    <div class="card-icon">
+                        🌾
+                    </div>
+
+                    <span class="card-status">
+                        STOCK
+                    </span>
+
+                </div>
+
+
+                <div class="card-label">
+                    FEED STOCK
+                </div>
+
+
+                <h2>
+                    {{ total_feed }} kg
+                </h2>
+
+
+                <p class="card-description">
+                    Feed remaining on the farm
+                </p>
+
+
+                <div class="card-info">
+
+                    <span>
+                        Feed Bags
+                    </span>
+
+                    <strong>
+                        {{ feed_inventory|length }}
+                    </strong>
+
+                </div>
+
+
+                <span class="card-action">
+                    Manage feed →
+                </span>
+
+            </article>
+
+        </a>
+
+
+        <!-- =====================================
+             CHICKS
+        ====================================== -->
+
+        <a
+            href="{{ url_for('chicks') }}"
+            class="card-link"
+        >
+
+            <article class="dashboard-card chicks-card">
+
+                <div class="card-top">
+
+                    <div class="card-icon">
+                        🐥
+                    </div>
+
+                    <span class="card-status">
+                        ACTIVE
+                    </span>
+
+                </div>
+
+
+                <div class="card-label">
+                    CHICKS STOCK
+                </div>
+
+
+                <h2>
+                    {{ total_chicks }}
+                </h2>
+
+
+                <p class="card-description">
+                    Active chicks on the farm
+                </p>
+
+
+                <div class="card-info">
+
+                    <span>
+                        Capacity
+                    </span>
+
+                    <strong>
+                        {{ chick_capacity }}
+                    </strong>
+
+                </div>
+
+
+                <span class="card-action">
+                    Manage chicks →
+                </span>
+
+            </article>
+
+        </a>
+
     </div>
 
-    <hr>
 
-    <div class="egg-breakdown">
+    <!-- =========================================
+         FARM OVERVIEW
+    ========================================== -->
 
-        <div class="egg-item">
-            <span>📦 Crates Available</span>
-            <strong>{{ available_crates }}</strong>
+    <section class="farm-summary">
+
+        <div class="section-title">
+
+            <div>
+
+                <h3>
+                    Farm Overview
+                </h3>
+
+                <p>
+                    Current farm performance
+                </p>
+
+            </div>
+
         </div>
 
-        <div class="egg-item">
-            <span>🥚 Loose Eggs</span>
-            <strong>{{ remaining_eggs }}</strong>
-        </div>
 
-    </div>
+        <!-- =====================================
+             EGGS PRODUCTION
+        ====================================== -->
 
-</div>
+        <div class="progress-item">
 
+            <div class="label">
 
-    </article>
+                <span>
+                    🥚 Egg Production
+                </span>
 
-
-
-
-
-    <!-- CASH -->
-
-    <article class="dashboard-card cash-card">
-
-
-        <h3>Farm Cash</h3>
-
-
-        <h1>
-            KSh {{ "{:,.0f}".format(available_cash) }}
-        </h1>
-
-
-        <p>
-            Available Cash
-        </p>
-
-
-        <div class="card-info">
-
-            <span>
-                Income:
                 <strong>
+                    {{ production_percent }}%
+                </strong>
+
+            </div>
+
+
+            <div class="progress">
+
+                <div
+                    class="progress-fill eggs"
+                    style="width:{{ production_percent }}%;"
+                ></div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================
+             CHICKS CAPACITY
+        ====================================== -->
+
+        <div class="progress-item">
+
+            <div class="label">
+
+                <span>
+                    🐥 Chicks Capacity
+                </span>
+
+                <strong>
+
+                    {{
+                        ((total_chicks / chick_capacity) * 100)
+                        if chick_capacity
+                        else 0
+                    | round(0)
+                    }}%
+
+                </strong>
+
+            </div>
+
+
+            <div class="progress">
+
+                <div
+                    class="progress-fill chicks"
+                    style="width:{{
+                        (total_chicks / chick_capacity * 100)
+                        if chick_capacity
+                        else 0
+                    }}%;"
+                ></div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================
+             FEED STOCK
+        ====================================== -->
+
+        <div class="progress-item">
+
+            <div class="label">
+
+                <span>
+                    🌾 Feed Inventory
+                </span>
+
+            </div>
+
+
+            {% for feed in feed_inventory %}
+
+                <div class="feed-progress-row">
+
+                    <div class="label">
+
+                        <span>
+                            {{ feed.feed_type }}
+
+                            {% if feed.bag_number %}
+                                ({{ feed.bag_number }})
+                            {% endif %}
+                        </span>
+
+                        <strong>
+                            {{ feed.percent_remaining|round(0) }}%
+                        </strong>
+
+                    </div>
+
+
+                    <div class="progress">
+
+                        <div
+                            class="progress-fill feed"
+                            style="width:{{ feed.percent_remaining }}%;"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+
+        <!-- =====================================
+             SALES TARGET
+        ====================================== -->
+
+        <div class="progress-item">
+
+            <div class="label">
+
+                <span>
+                    💰 Sales Target
+                </span>
+
+                <strong>
+
+                    {{
+                        (
+                            (sales_today / sales_target) * 100
+                        )
+                        if sales_target
+                        else 0
+                    | round(0)
+                    }}%
+
+                </strong>
+
+            </div>
+
+
+            <div class="progress">
+
+                <div
+                    class="progress-fill sales"
+                    style="width:{{
+                        (
+                            (sales_today / sales_target) * 100
+                        )
+                        if sales_target
+                        else 0
+                    }}%;"
+                ></div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================================
+         QUICK SUMMARY
+    ========================================== -->
+
+    <section class="summary-grid">
+
+
+        <!-- EGGS TODAY -->
+
+        <div class="summary-card egg-summary">
+
+            <div class="card-icon">
+                🥚
+            </div>
+
+            <div>
+
+                <h4>
+                    Eggs Today
+                </h4>
+
+                <h2>
+                    {{ collection_today }}
+                </h2>
+
+                <p>
+                    Collected today
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- TOTAL EGGS -->
+
+        <div class="summary-card egg-summary">
+
+            <div class="card-icon">
+                📊
+            </div>
+
+            <div>
+
+                <h4>
+                    Total Eggs
+                </h4>
+
+                <h2>
+                    {{ total_eggs }}
+                </h2>
+
+                <p>
+                    All-time collection
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- REVENUE -->
+
+        <div class="summary-card cash-summary">
+
+            <div class="card-icon">
+                💵
+            </div>
+
+            <div>
+
+                <h4>
+                    Revenue
+                </h4>
+
+                <h2>
                     KSh {{ "{:,.0f}".format(revenue) }}
-                </strong>
-            </span>
+                </h2>
 
+                <p>
+                    Total farm sales
+                </p>
 
-        </div>
-
-
-    </article>
-
-
-
-
-
-
-    <!-- FEED -->
-
-    <article class="dashboard-card feed-card">
-
-
-        <h3>Feed Stock</h3>
-
-
-        <h1>
-            Feed={{ total_feed }}
-        </h1>
-
-
-        <p>
-            Available Feed
-        </p>
-
-
-        <div class="card-info">
-
-
-            <span>
-                Feed Types:
-                <strong>
-                    {{ feed_inventory|length }}
-                </strong>
-            </span>
-
+            </div>
 
         </div>
 
 
-    </article>
+        <!-- FEED -->
 
+        <div class="summary-card feed-summary">
 
+            <div class="card-icon">
+                🌾
+            </div>
 
+            <div>
 
+                <h4>
+                    Feed Available
+                </h4>
 
+                <h2>
+                    {{ total_feed }} kg
+                </h2>
 
-    <!-- CHICKS -->
+                <p>
+                    Current stock
+                </p>
 
-    <article class="dashboard-card chicks-card">
-
-
-        <h3>Chicks Stock</h3>
-
-
-        <h1>
-           Chicks={{ total_chicks }}
-        </h1>
-
-
-        <p>
-            Active Chicks
-        </p>
-
-
-        <div class="card-info">
-
-
-            <span>
-                Capacity:
-                <strong>
-                    {{ chick_capacity }}
-                </strong>
-            </span>
-
+            </div>
 
         </div>
 
 
-    </article>
+        <!-- CHICKS -->
 
+        <div class="summary-card chick-summary">
 
+            <div class="card-icon">
+                🐥
+            </div>
 
-</section>
+            <div>
 
+                <h4>
+                    Active Chicks
+                </h4>
 
+                <h2>
+                    {{ total_chicks }}
+                </h2>
 
+                <p>
+                    Current population
+                </p>
 
+            </div>
 
+        </div>
 
 
-<!-- FARM SUMMARY -->
+        <!-- SALES TODAY -->
 
+        <div class="summary-card sales-summary">
 
-<section class="section">
+            <div class="card-icon">
+                💰
+            </div>
 
+            <div>
 
-<div class="section-title">
+                <h4>
+                    Sales Today
+                </h4>
 
-<h2>
-Farm Summary
-</h2>
+                <h2>
+                    KSh {{ "{:,.0f}".format(sales_today) }}
+                </h2>
 
-</div>
+                <p>
+                    Today's sales
+                </p>
 
+            </div>
 
+        </div>
 
-<div class="farm-summary">
+    </section>
 
 
+    <!-- =========================================
+         FARM STATUS
+    ========================================== -->
 
-<!-- EGGS PROGRESS -->
+    <section class="section">
 
-<div class="progress-item">
+        <div class="section-title">
 
+            <div>
 
-<div class="label">
+                <h3>
+                    Farm Status
+                </h3>
 
-<span>
-Egg Production
-</span>
+                <p>
+                    Quick look at your farm
+                </p>
 
+            </div>
 
-<span>
-{{ production_percent }}%
-</span>
+        </div>
 
 
-</div>
+        <div class="summary-grid">
 
 
+            <!-- AVAILABLE EGGS -->
 
-<div class="progress">
+            <div class="summary-box">
 
-<div class="progress-fill production"
+                <div class="summary-icon">
+                    🥚
+                </div>
 
-style="width:{{ production_percent }}%;">
+                <div>
 
-</div>
+                    <h4>
+                        Available Eggs
+                    </h4>
 
-</div>
+                    <p>
+                        <strong>
+                            {{ available_eggs }}
+                        </strong>
+                    </p>
 
+                    <small>
+                        Ready for sale
+                    </small>
 
-</div>
+                </div>
 
+            </div>
 
 
+            <!-- AVAILABLE CASH -->
 
+            <div class="summary-box">
 
+                <div class="summary-icon">
+                    💰
+                </div>
 
-<!-- CHICKS PROGRESS -->
+                <div>
 
+                    <h4>
+                        Available Cash
+                    </h4>
 
-<div class="progress-item">
+                    <p>
+                        <strong>
+                            KSh {{ "{:,.0f}".format(available_cash) }}
+                        </strong>
+                    </p>
 
+                    <small>
+                        Current balance
+                    </small>
 
-<div class="label">
+                </div>
 
+            </div>
 
-<span>
-Chicks
-</span>
 
+            <!-- FEED -->
 
-<span>
-{{ total_chicks }}/{{ chick_capacity }}
-</span>
+            <div class="summary-box">
 
+                <div class="summary-icon">
+                    🌾
+                </div>
 
-</div>
+                <div>
 
+                    <h4>
+                        Feed Stock
+                    </h4>
 
+                    <p>
+                        <strong>
+                            {{ total_feed }} kg
+                        </strong>
+                    </p>
 
-<div class="progress">
+                    <small>
+                        Remaining feed
+                    </small>
 
+                </div>
 
-<div class="progress-fill chicks"
+            </div>
 
-style="width:
-{{ (total_chicks/chick_capacity)*100 if chick_capacity else 0 }}%;">
 
-</div>
+            <!-- CHICKS -->
 
+            <div class="summary-box">
 
-</div>
+                <div class="summary-icon">
+                    🐥
+                </div>
 
+                <div>
 
-</div>
+                    <h4>
+                        Chicks
+                    </h4>
 
+                    <p>
+                        <strong>
+                            {{ total_chicks }}
+                        </strong>
+                    </p>
 
+                    <small>
+                        Active birds
+                    </small>
 
+                </div>
 
+            </div>
 
+        </div>
 
-
-
-<!-- FEED SUMMARY -->
-
-
-{% for feed in feed_inventory %}
-
-
-<div class="progress-item">
-
-
-<div class="label">
-
-
-<span>
-{{ feed.feed_type }}
-</span>
-
-
-<span>
-{{ "%.1f"|format(feed.remaining_kg) }} kg
-</span>
-
-
-</div>
-
-
-
-<div class="progress">
-
-
-<div class="progress-fill feed-good"
-
-style="width:
-{{ feed.percent_remaining }}%;">
-
-</div>
-
-
-</div>
-
-
-
-</div>
-
-
-{% endfor %}
-
-
-
-
-
-
-<!-- SALES -->
-
-
-<div class="progress-item">
-
-
-<div class="label">
-
-
-<span>
-Sales Today
-</span>
-
-
-<span>
-KSh {{ sales_today }}
-</span>
-
-
-</div>
-
-
-
-<div class="progress">
-
-
-<div class="progress-fill sales"
-
-style="width:
-{{ (sales_today/sales_target)*100 if sales_target else 0 }}%;">
-
-</div>
-
-
-</div>
+    </section>
 
 
 </div>
 
-
-
-
-</div>
-
-
-</section>
-
-
-
-</div>
+{% endblock %}
