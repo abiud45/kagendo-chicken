@@ -8,15 +8,58 @@ import firebase_admin
 from firebase_admin import credentials, messaging
 from werkzeug.utils import secure_filename
 
+import os
+import firebase_admin
 
+from firebase_admin import credentials, messaging
 
 app = Flask(__name__, template_folder="templates")
 # Initialize Firebase
 firebase_json = os.getenv("FIREBASE_SERVICE_ACCOUNT")
 
+# Firebase Admin SDK
+firebase_private_key = os.environ.get("FIREBASE_PRIVATE_KEY")
+
+if firebase_private_key:
+    firebase_private_key = firebase_private_key.replace("\\n", "\n")
+
+firebase_credentials = credentials.Certificate({
+    "type": "service_account",
+    "project_id": os.environ.get("FIREBASE_PROJECT_ID"),
+    "private_key": firebase_private_key,
+    "client_email": os.environ.get("FIREBASE_CLIENT_EMAIL"),
+})
+
+if not firebase_admin._apps:
+    firebase_admin.initialize_app(firebase_credentials)
+
 if firebase_json and not firebase_admin._apps:
     cred = credentials.Certificate(json.loads(firebase_json))
     firebase_admin.initialize_app(cred)
+
+
+def send_fcm_notification(token, title, body):
+    try:
+        message = messaging.Message(
+            notification=messaging.Notification(
+                title=title,
+                body=body
+            ),
+            token=token
+        )
+
+        response = messaging.send(message)
+
+        print("Notification sent:", response)
+
+        return True
+
+    except Exception as e:
+
+        print("Notification failed:", e)
+
+        return False
+
 
 app.secret_key = os.environ.get(
     "SECRET_KEY",
@@ -304,6 +347,16 @@ class DeviceToken(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     token = db.Column(db.String(300), unique=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class FCMToken(db.Model):
+    __tablename__ = "fcm_tokens"
+
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.Text, unique=True, nullable=False)
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
 
 
 
@@ -1752,32 +1805,58 @@ def notifications():
 
 @app.route("/register-token", methods=["POST"])
 def register_token():
-    data = request.get_json()
+    try:
+        data = request.get_json()
 
-    if not data:
+        if not data or not data.get("token"):
+            return jsonify({
+                "success": False,
+                "message": "Token is required"
+            }), 400
+
+        token = data["token"]
+
+        # Check whether token already exists
+        existing_token = DeviceToken.query.filter_by(
+            token=token
+        ).first()
+
+        if existing_token:
+            return jsonify({
+                "success": True,
+                "message": "Token already registered"
+            })
+
+        # Save new token
+        new_token = DeviceToken(token=token)
+
+        db.session.add(new_token)
+        db.session.commit()
+
+        print("FCM token registered:", token)
+
+        return jsonify({
+            "success": True,
+            "message": "Token registered successfully"
+        })
+
+    except Exception as e:
+        db.session.rollback()
+
+        print("Token registration error:", e)
+
         return jsonify({
             "success": False,
-            "error": "No data received"
-        }), 400
+            "message": str(e)
+        }), 500
 
-    token = data.get("token")
 
-    if not token:
-        return jsonify({
-            "success": False,
-            "error": "FCM token missing"
-        }), 400
+class DeviceToken(db.Model):
+    __tablename__ = "device_tokens"
 
-    print("================================")
-    print("FCM TOKEN RECEIVED:")
-    print(token)
-    print("================================")
-
-    return jsonify({
-        "success": True,
-        "message": "FCM token received"
-    }), 200
-
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.Text, unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 @app.route("/reminders")
 def reminders():
@@ -1938,6 +2017,30 @@ def check_reminders():
                 })
 
     return {"reminders": due}
+
+
+@app.route("/send-test-notification")
+def send_test_notification():
+
+    tokens = DeviceToken.query.all()
+
+    if not tokens:
+        return "No registered devices found."
+
+    sent = 0
+
+    for device in tokens:
+
+        success = send_fcm_notification(
+            device.token,
+            "Kagendo Chicken 🐔",
+            "Your farm notification system is working!"
+        )
+
+        if success:
+            sent += 1
+
+    return f"Notification sent to {sent} device(s)."
 
 
 import traceback
