@@ -2423,75 +2423,83 @@ display:block;
 }
 
 
-/* Floating Logo */
+/* =========================================
+   DASHBOARD FLOATING APP LOGO
+========================================= */
 
-.floating-logo{
-
-    position:absolute;
-
-    left:50%;
-
-    transform:translateX(-50%);
-
-    width:180px;
-
-    height:180px;
-
-    background:white;
-
-    border-radius:50%;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    box-shadow:
-        0 20px 45px rgba(0,0,0,.15);
-
-    border:8px solid #f7faf8;
-
-    z-index:50;
-
+.dashboard-header {
+    position: relative;
+    height: 55px;
+    margin-bottom: 10px;
 }
 
-.floating-logo img{
 
-    width:120px;
+.floating-logo {
+    position: absolute;
 
-    height:120px;
+    top: 5px;
+    right: 10px;
 
-    object-fit:contain;
+    width: 48px;
+    height: 48px;
 
+    border-radius: 14px;
+
+    background: #ffffff;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 5px;
+
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+
+    z-index: 5;
+
+    overflow: hidden;
 }
 
-/* Floating animation */
 
-.floating-logo{
+.floating-logo img {
+    width: 100%;
+    height: 100%;
 
-    animation:floatLogo 4s ease-in-out infinite;
+    object-fit: contain;
 
+    border-radius: 10px;
+
+    display: block;
 }
 
-@keyframes floatLogo{
 
-    0%{
-        transform:
-        translateX(-50%)
-        translateY(0px);
+/* Fallback chicken icon */
+
+.floating-logo:not(:has(img)) {
+    font-size: 24px;
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 600px) {
+
+    .dashboard-header {
+        height: 48px;
     }
 
-    50%{
-        transform:
-        translateX(-50%)
-        translateY(-8px);
-    }
+    .floating-logo {
+        width: 42px;
+        height: 42px;
 
-    100%{
-        transform:
-        translateX(-50%)
-        translateY(0px);
+        top: 3px;
+        right: 5px;
+
+        border-radius: 12px;
+
+        padding: 4px;
     }
 
 }
@@ -3523,5 +3531,621 @@ section.summary-grid .summary-card h2,
 section.summary-grid .summary-card p {
 
     color:white !important;
+
+}
+
+.egg-breakdown{
+    margin-top:12px;
+}
+
+.egg-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:8px 0;
+    border-top:1px solid rgba(255,255,255,.15);
+}
+
+.egg-item span{
+    font-size:14px;
+}
+
+.egg-item strong{
+    font-size:18px;
+    font-weight:700;
+}
+
+.card-label{
+    font-size:13px;
+    opacity:.85;
+    margin-top:4px;
+}
+
+/* =========================================
+   KAGENDO DASHBOARD CARDS
+========================================= */
+
+.dashboard-cards {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 20px;
+
+    margin: 25px 0;
+
+}
+
+
+/* =========================================
+   CARD
+========================================= */
+
+.dashboard-card {
+
+    position: relative;
+
+    overflow: hidden;
+
+    background: #ffffff;
+
+    border-radius: 22px;
+
+    padding: 22px;
+
+    min-height: 250px;
+
+    border: 1px solid #e8edf2;
+
+    box-shadow:
+        0 8px 25px rgba(15, 23, 42, .07);
+
+    transition:
+        transform .25s ease,
+        box-shadow .25s ease;
+
+}
+
+
+/* Decorative glow */
+
+.dashboard-card::after {
+
+    content: "";
+
+    position: absolute;
+
+    width: 120px;
+    height: 120px;
+
+    right: -45px;
+    bottom: -45px;
+
+    border-radius: 50%;
+
+    background: rgba(255,255,255,.45);
+
+    pointer-events: none;
+
+}
+
+
+/* Hover */
+
+.dashboard-card:hover {
+
+    transform: translateY(-6px);
+
+    box-shadow:
+        0 18px 40px rgba(15, 23, 42, .12);
+
+}
+
+
+/* =========================================
+   TOP
+========================================= */
+
+.card-top {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    margin-bottom: 20px;
+
+}
+
+
+/* =========================================
+   ICON
+========================================= */
+
+.card-icon {
+
+    width: 52px;
+    height: 52px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 16px;
+
+    font-size: 27px;
+
+    background: #f1f5f9;
+
+}
+
+
+/* =========================================
+   STATUS
+========================================= */
+
+.card-status {
+
+    padding: 6px 11px;
+
+    border-radius: 30px;
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+    letter-spacing: .8px;
+
+}
+
+
+/* =========================================
+   LABEL
+========================================= */
+
+.dashboard-card .card-label {
+
+    margin-bottom: 7px;
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    letter-spacing: 1px;
+
+    color: #64748b;
+
+}
+
+
+/* =========================================
+   NUMBER
+========================================= */
+
+.dashboard-card h2 {
+
+    margin: 0;
+
+    font-size: 32px;
+
+    line-height: 1.2;
+
+    font-weight: 800;
+
+    color: #0f172a;
+
+}
+
+
+/* =========================================
+   DESCRIPTION
+========================================= */
+
+.dashboard-card .card-description {
+
+    margin: 7px 0 18px;
+
+    font-size: 13px;
+
+    color: #64748b;
+
+}
+
+
+/* =========================================
+   INFO
+========================================= */
+
+.dashboard-card .card-info {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    padding: 12px 0;
+
+    border-top: 1px solid #eef2f7;
+
+    margin-top: auto;
+
+    font-size: 13px;
+
+    color: #64748b;
+
+}
+
+.dashboard-card .card-info strong {
+
+    color: #1e293b;
+
+    font-weight: 700;
+
+}
+
+
+/* =========================================
+   EGG BREAKDOWN
+========================================= */
+
+.dashboard-card .egg-breakdown {
+
+    display: flex;
+
+    gap: 8px;
+
+    margin-top: 10px;
+
+}
+
+
+.dashboard-card .egg-item {
+
+    flex: 1;
+
+    padding: 9px;
+
+    border-radius: 12px;
+
+    background: #f8fafc;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 4px;
+
+}
+
+
+.dashboard-card .egg-item span {
+
+    font-size: 10px;
+
+    color: #64748b;
+
+}
+
+
+.dashboard-card .egg-item strong {
+
+    font-size: 16px;
+
+    color: #0f172a;
+
+}
+
+
+/* =========================================
+   ACTION
+========================================= */
+
+.dashboard-card .card-action {
+
+    display: inline-block;
+
+    margin-top: 14px;
+
+    color: #2563eb;
+
+    text-decoration: none;
+
+    font-size: 12px;
+
+    font-weight: 800;
+
+    transition: .2s;
+
+}
+
+
+.dashboard-card .card-action:hover {
+
+    transform: translateX(4px);
+
+}
+
+
+/* =========================================
+   EGGS
+========================================= */
+
+.eggs-card {
+
+    border-top: 4px solid #22c55e;
+
+}
+
+
+.eggs-card .card-icon {
+
+    background: #dcfce7;
+
+}
+
+
+.eggs-card .card-status {
+
+    background: #dcfce7;
+
+    color: #15803d;
+
+}
+
+
+.eggs-card .card-action {
+
+    color: #15803d;
+
+}
+
+
+/* =========================================
+   CASH
+========================================= */
+
+.cash-card {
+
+    border-top: 4px solid #2563eb;
+
+}
+
+
+.cash-card .card-icon {
+
+    background: #dbeafe;
+
+}
+
+
+.cash-card .card-status {
+
+    background: #dbeafe;
+
+    color: #1d4ed8;
+
+}
+
+
+.cash-card .card-action {
+
+    color: #2563eb;
+
+}
+
+
+/* =========================================
+   FEED
+========================================= */
+
+.feed-card {
+
+    border-top: 4px solid #f59e0b;
+
+}
+
+
+.feed-card .card-icon {
+
+    background: #fef3c7;
+
+}
+
+
+.feed-card .card-status {
+
+    background: #fef3c7;
+
+    color: #b45309;
+
+}
+
+
+.feed-card .card-action {
+
+    color: #b45309;
+
+}
+
+
+/* =========================================
+   CHICKS
+========================================= */
+
+.chicks-card {
+
+    border-top: 4px solid #8b5cf6;
+
+}
+
+
+.chicks-card .card-icon {
+
+    background: #ede9fe;
+
+}
+
+
+.chicks-card .card-status {
+
+    background: #ede9fe;
+
+    color: #6d28d9;
+
+}
+
+
+.chicks-card .card-action {
+
+    color: #7c3aed;
+
+}
+
+
+/* =========================================
+   TABLET
+========================================= */
+
+@media (max-width: 1100px) {
+
+    .dashboard-cards {
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+    }
+
+}
+
+
+/* =========================================
+   PHONE
+========================================= */
+
+@media (max-width: 600px) {
+
+    .dashboard-cards {
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 10px;
+
+        margin: 15px 0;
+
+    }
+
+
+    .dashboard-card {
+
+        padding: 14px;
+
+        min-height: 220px;
+
+        border-radius: 17px;
+
+    }
+
+
+    .dashboard-card h2 {
+
+        font-size: 21px;
+
+    }
+
+
+    .dashboard-card .card-label {
+
+        font-size: 8px;
+
+        letter-spacing: .6px;
+
+    }
+
+
+    .dashboard-card .card-description {
+
+        font-size: 10px;
+
+        margin-bottom: 10px;
+
+    }
+
+
+    .card-icon {
+
+        width: 40px;
+        height: 40px;
+
+        font-size: 20px;
+
+        border-radius: 12px;
+
+    }
+
+
+    .card-status {
+
+        padding: 5px 7px;
+
+        font-size: 7px;
+
+    }
+
+
+    .dashboard-card .card-info {
+
+        font-size: 10px;
+
+    }
+
+
+    .dashboard-card .card-info strong {
+
+        font-size: 10px;
+
+    }
+
+
+    .dashboard-card .egg-breakdown {
+
+        gap: 5px;
+
+    }
+
+
+    .dashboard-card .egg-item {
+
+        padding: 7px;
+
+    }
+
+
+    .dashboard-card .egg-item span {
+
+        font-size: 8px;
+
+    }
+
+
+    .dashboard-card .egg-item strong {
+
+        font-size: 13px;
+
+    }
+
+
+    .dashboard-card .card-action {
+
+        font-size: 10px;
+
+        margin-top: 9px;
+
+    }
 
 }
