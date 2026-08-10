@@ -15,28 +15,110 @@ from firebase_admin import credentials, messaging
 
 app = Flask(__name__, template_folder="templates")
 # Initialize Firebase
-firebase_json = os.getenv("FIREBASE_SERVICE_ACCOUNT")
+# =========================================================
+# FIREBASE ADMIN SDK
+# =========================================================
 
-# Firebase Admin SDK
-firebase_private_key = os.environ.get("FIREBASE_PRIVATE_KEY")
+firebase_app = None
 
-if firebase_private_key:
-    firebase_private_key = firebase_private_key.replace("\\n", "\n")
+try:
 
-firebase_credentials = credentials.Certificate({
-    "type": "service_account",
-    "project_id": os.environ.get("FIREBASE_PROJECT_ID"),
-    "private_key": firebase_private_key,
-    "client_email": os.environ.get("FIREBASE_CLIENT_EMAIL"),
-    "token_uri": "https://oauth2.googleapis.com/token",
-})
+    # -----------------------------------------------------
+    # OPTION 1: Complete Firebase service account JSON
+    # -----------------------------------------------------
 
-if not firebase_admin._apps:
-    firebase_admin.initialize_app(firebase_credentials)
+    firebase_json = os.getenv("FIREBASE_SERVICE_ACCOUNT")
 
-if firebase_json and not firebase_admin._apps:
-    cred = credentials.Certificate(json.loads(firebase_json))
-    firebase_admin.initialize_app(cred)
+    if firebase_json:
+
+        firebase_data = json.loads(firebase_json)
+
+        firebase_credentials = credentials.Certificate(
+            firebase_data
+        )
+
+        if not firebase_admin._apps:
+            firebase_app = firebase_admin.initialize_app(
+                firebase_credentials
+            )
+        else:
+            firebase_app = firebase_admin.get_app()
+
+        print("Firebase initialized using FIREBASE_SERVICE_ACCOUNT")
+
+
+    else:
+
+        # -------------------------------------------------
+        # OPTION 2: Individual Firebase environment variables
+        # -------------------------------------------------
+
+        firebase_project_id = os.getenv(
+            "FIREBASE_PROJECT_ID"
+        )
+
+        firebase_private_key = os.getenv(
+            "FIREBASE_PRIVATE_KEY"
+        )
+
+        firebase_client_email = os.getenv(
+            "FIREBASE_CLIENT_EMAIL"
+        )
+
+        # Convert escaped \\n into real new lines
+        if firebase_private_key:
+            firebase_private_key = firebase_private_key.replace(
+                "\\n",
+                "\n"
+            )
+
+        # Only initialize Firebase when ALL credentials exist
+        if (
+            firebase_project_id
+            and firebase_private_key
+            and firebase_client_email
+        ):
+
+            firebase_credentials = credentials.Certificate({
+
+                "type": "service_account",
+
+                "project_id": firebase_project_id,
+
+                "private_key": firebase_private_key,
+
+                "client_email": firebase_client_email,
+
+                "token_uri":
+                    "https://oauth2.googleapis.com/token"
+            })
+
+            if not firebase_admin._apps:
+                firebase_app = firebase_admin.initialize_app(
+                    firebase_credentials
+                )
+            else:
+                firebase_app = firebase_admin.get_app()
+
+            print(
+                "Firebase initialized using individual credentials"
+            )
+
+        else:
+
+            print(
+                "Firebase credentials not configured. "
+                "Firebase notifications disabled."
+            )
+
+
+except Exception as e:
+
+    print(
+        f"Firebase initialization failed: {e}"
+    )
+
+    firebase_app = None
 
 
 def send_fcm_notification(token, title, body):
@@ -1751,8 +1833,8 @@ def batch_feed(id):
             send_push_notification(
                 "⚠️ Feed Running Low",
                 f"{feed.feed_type} ({feed.bag_number}) has only "
-                f"{feed.remaining_kg:.1f} kg remaining. Please restock.",
-                "feed_low"
+                f"{feed.remaining_kg:.1f} kg remaining. "
+                "Please restock."
             )
 
             db.session.add(
@@ -2289,62 +2371,29 @@ def send_test_notification():
 
 import traceback
 
-def send_push_notification(title, message, notification_type="general"):
-    """
-    Send Firebase push notification
-    AND save notification inside Kagendo Chicken.
-    """
+def send_push_notification(title, body):
+    try:
+        device = DeviceToken.query.order_by(DeviceToken.id.desc()).first()
 
-    # ==========================================
-    # 1. SAVE IN-APP NOTIFICATION
-    # ==========================================
+        if not device:
+            print("No registered device found.")
+            return False
 
-    notification = AppNotification(
-        title=title,
-        message=message,
-        notification_type=notification_type
-    )
+        message = messaging.Message(
+            notification=messaging.Notification(
+                title=title,
+                body=body
+            ),
+            token=device.token
+        )
 
-    db.session.add(notification)
-    db.session.commit()
+        response = messaging.send(message)
+        print("Notification sent:", response)
+        return True
 
-    # ==========================================
-    # 2. GET REGISTERED FCM TOKENS
-    # ==========================================
-
-    tokens = DeviceToken.query.all()
-
-    if not tokens:
-        print("No registered FCM devices.")
-        return
-
-    # ==========================================
-    # 3. SEND PUSH NOTIFICATION
-    # ==========================================
-
-    for device in tokens:
-
-        try:
-
-            firebase_message = messaging.Message(
-                notification=messaging.Notification(
-                    title=title,
-                    body=message
-                ),
-                token=device.token
-            )
-
-            response = messaging.send(firebase_message)
-
-            print(
-                f"Notification sent to device: {response}"
-            )
-
-        except Exception as e:
-
-            print(
-                f"Notification failed: {e}"
-            )
+    except Exception as e:
+        print("Notification error:", e)
+        return False
 
 
 from sqlalchemy import func
