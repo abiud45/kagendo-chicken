@@ -1,4 +1,3 @@
-```html
 <div class="page">
 
     <!-- =========================================
@@ -471,7 +470,7 @@
 
 
     <!-- =========================================
-         FLOATING QUICK ACTIONS
+         FLOATING QUICK ACTION BUTTON
     ========================================== -->
 
     <button
@@ -479,8 +478,9 @@
         id="quickActionBtn"
         type="button"
         aria-label="Quick actions"
+        aria-expanded="false"
     >
-        +
+        <span class="quick-action-icon">+</span>
     </button>
 
 
@@ -510,65 +510,5 @@
         </a>
 
     </div>
-
-
-    <!-- =========================================
-         QUICK ACTION JAVASCRIPT
-    ========================================== -->
-
-    <script>
-
-        document.addEventListener("DOMContentLoaded", function () {
-
-            const quickActionBtn =
-                document.getElementById("quickActionBtn");
-
-            const quickMenu =
-                document.getElementById("quickMenu");
-
-
-            if (quickActionBtn && quickMenu) {
-
-                quickActionBtn.addEventListener(
-                    "click",
-                    function (event) {
-
-                        event.stopPropagation();
-
-                        quickMenu.classList.toggle("show");
-
-                        quickActionBtn.classList.toggle("active");
-
-                    }
-                );
-
-
-                document.addEventListener(
-                    "click",
-                    function () {
-
-                        quickMenu.classList.remove("show");
-
-                        quickActionBtn.classList.remove("active");
-
-                    }
-                );
-
-
-                quickMenu.addEventListener(
-                    "click",
-                    function (event) {
-
-                        event.stopPropagation();
-
-                    }
-                );
-
-            }
-
-        });
-
-    </script>
-
 
 </div>
