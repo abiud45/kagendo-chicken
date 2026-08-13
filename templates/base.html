@@ -56,8 +56,8 @@
 
 <div
     class="sidebar-overlay"
-    id="sidebarOverlay"
-></div>
+    id="sidebarOverlay">
+</div>
 
 
 <!-- =========================================
@@ -69,10 +69,7 @@
     id="sidebar"
 >
 
-
-    <!-- =====================================
-         LOGO
-    ====================================== -->
+    <!-- LOGO -->
 
     <div class="logo">
 
@@ -95,9 +92,7 @@
     </div>
 
 
-    <!-- =====================================
-         NAVIGATION
-    ====================================== -->
+    <!-- NAVIGATION -->
 
     <nav class="sidebar-menu">
 
@@ -192,7 +187,6 @@
 
     </nav>
 
-
 </div>
 
 
@@ -213,27 +207,23 @@
     <header class="topbar">
 
 
-        <!-- =================================
-             LEFT SIDE
-        ================================== -->
+        <!-- LEFT -->
 
         <div class="top-left">
 
 
-            <!-- MOBILE MENU BUTTON -->
+            <!-- SIDEBAR BUTTON -->
 
             <button
                 class="menu-btn"
                 id="menuBtn"
                 type="button"
-                aria-label="Open navigation menu"
+                aria-label="Toggle navigation"
                 aria-expanded="false"
             >
                 ☰
             </button>
 
-
-            <!-- BRAND -->
 
             <span class="brand-logo">
                 🐔
@@ -247,16 +237,12 @@
         </div>
 
 
-        <!-- =================================
-             RIGHT SIDE
-        ================================== -->
+        <!-- RIGHT -->
 
         <div class="top-actions">
 
 
-            <!-- =================================
-                 SEARCH
-            ================================== -->
+            <!-- SEARCH -->
 
             <div class="search-box">
 
@@ -269,12 +255,9 @@
             </div>
 
 
-            <!-- =================================
-                 NOTIFICATIONS
-            ================================== -->
+            <!-- NOTIFICATIONS -->
 
             <div class="notification-container">
-
 
                 <button
                     id="notification-btn"
@@ -297,41 +280,30 @@
                     class="notification-dropdown"
                 >
 
-
                     {% if notifications %}
-
 
                         {% for note in notifications %}
 
                             <div class="notification-item">
-
                                 {{ note }}
-
                             </div>
 
                         {% endfor %}
 
-
                     {% else %}
 
                         <div class="notification-item">
-
                             No notifications 🎉
-
                         </div>
 
                     {% endif %}
 
-
                 </div>
-
 
             </div>
 
 
-            <!-- =================================
-                 PROFILE
-            ================================== -->
+            <!-- PROFILE -->
 
             <button
                 class="profile-btn"
@@ -354,13 +326,11 @@
 
     <main class="page">
 
-
         {% block content %}
 
             {{ body|safe }}
 
         {% endblock %}
-
 
     </main>
 
@@ -393,14 +363,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function openSidebar() {
 
-        if (!sidebar) return;
+        if (!sidebar) {
+            return;
+        }
 
         sidebar.classList.add("open");
 
         if (sidebarOverlay) {
-
             sidebarOverlay.classList.add("show");
-
         }
 
         if (menuBtn) {
@@ -419,14 +389,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function closeSidebar() {
 
-        if (!sidebar) return;
+        if (!sidebar) {
+            return;
+        }
 
         sidebar.classList.remove("open");
 
         if (sidebarOverlay) {
-
             sidebarOverlay.classList.remove("show");
-
         }
 
         if (menuBtn) {
@@ -443,23 +413,35 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
-    if (menuBtn && sidebar) {
+    function toggleSidebar() {
+
+        if (!sidebar) {
+            return;
+        }
+
+        if (sidebar.classList.contains("open")) {
+
+            closeSidebar();
+
+        } else {
+
+            openSidebar();
+
+        }
+
+    }
+
+
+    if (menuBtn) {
 
         menuBtn.addEventListener(
             "click",
             function (event) {
 
+                event.preventDefault();
                 event.stopPropagation();
 
-                if (sidebar.classList.contains("open")) {
-
-                    closeSidebar();
-
-                } else {
-
-                    openSidebar();
-
-                }
+                toggleSidebar();
 
             }
         );
@@ -481,37 +463,64 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
-    /* =====================================
-       CLOSE SIDEBAR AFTER NAVIGATION
-    ====================================== */
+    /*
+     * Close sidebar when a navigation
+     * link is selected.
+     */
 
     if (sidebar) {
 
         const sidebarLinks =
-            sidebar.querySelectorAll("a");
-
-        sidebarLinks.forEach(function (link) {
-
-            link.addEventListener(
-                "click",
-                function () {
-
-                    closeSidebar();
-
-                }
+            sidebar.querySelectorAll(
+                ".sidebar-menu a"
             );
 
-        });
+
+        sidebarLinks.forEach(
+            function (link) {
+
+                link.addEventListener(
+                    "click",
+                    function () {
+
+                        closeSidebar();
+
+                    }
+                );
+
+            }
+        );
 
     }
 
 
+    /*
+     * Automatically close sidebar when
+     * the browser becomes desktop-sized.
+     */
+
+    window.addEventListener(
+        "resize",
+        function () {
+
+            if (window.innerWidth > 900) {
+
+                closeSidebar();
+
+            }
+
+        }
+    );
+
+
     /* =====================================
-       NOTIFICATION BUTTON
+       NOTIFICATIONS
     ====================================== */
 
     const notificationBtn =
-        document.getElementById("notification-btn");
+        document.getElementById(
+            "notification-btn"
+        );
 
     const notificationDropdown =
         document.getElementById(
@@ -519,13 +528,16 @@ document.addEventListener("DOMContentLoaded", function () {
         );
 
 
-    if (notificationBtn && notificationDropdown) {
-
+    if (
+        notificationBtn &&
+        notificationDropdown
+    ) {
 
         notificationBtn.addEventListener(
             "click",
             function (event) {
 
+                event.preventDefault();
                 event.stopPropagation();
 
                 notificationDropdown.classList.toggle(
@@ -536,13 +548,11 @@ document.addEventListener("DOMContentLoaded", function () {
         );
 
 
-        document.addEventListener(
+        notificationDropdown.addEventListener(
             "click",
-            function () {
+            function (event) {
 
-                notificationDropdown.classList.remove(
-                    "show"
-                );
+                event.stopPropagation();
 
             }
         );
@@ -565,26 +575,80 @@ document.addEventListener("DOMContentLoaded", function () {
         );
 
 
-    if (quickActionBtn && quickMenu) {
+    function closeQuickMenu() {
 
+        if (quickMenu) {
+
+            quickMenu.classList.remove(
+                "show"
+            );
+
+        }
+
+        if (quickActionBtn) {
+
+            quickActionBtn.classList.remove(
+                "active"
+            );
+
+        }
+
+    }
+
+
+    function toggleQuickMenu() {
+
+        if (
+            !quickActionBtn ||
+            !quickMenu
+        ) {
+            return;
+        }
+
+
+        const isOpen =
+            quickMenu.classList.contains(
+                "show"
+            );
+
+
+        if (isOpen) {
+
+            closeQuickMenu();
+
+        } else {
+
+            quickMenu.classList.add(
+                "show"
+            );
+
+            quickActionBtn.classList.add(
+                "active"
+            );
+
+        }
+
+    }
+
+
+    if (quickActionBtn) {
 
         quickActionBtn.addEventListener(
             "click",
             function (event) {
 
+                event.preventDefault();
                 event.stopPropagation();
 
-                quickMenu.classList.toggle(
-                    "show"
-                );
-
-                quickActionBtn.classList.toggle(
-                    "active"
-                );
+                toggleQuickMenu();
 
             }
         );
 
+    }
+
+
+    if (quickMenu) {
 
         quickMenu.addEventListener(
             "click",
@@ -595,27 +659,33 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         );
 
-
-        document.addEventListener(
-            "click",
-            function () {
-
-                quickMenu.classList.remove(
-                    "show"
-                );
-
-                quickActionBtn.classList.remove(
-                    "active"
-                );
-
-            }
-        );
-
     }
 
 
     /* =====================================
-       GLOBAL SEARCH
+       GLOBAL CLICK
+    ====================================== */
+
+    document.addEventListener(
+        "click",
+        function () {
+
+            if (notificationDropdown) {
+
+                notificationDropdown.classList.remove(
+                    "show"
+                );
+
+            }
+
+            closeQuickMenu();
+
+        }
+    );
+
+
+    /* =====================================
+       SEARCH
     ====================================== */
 
     const searchInput =
@@ -626,11 +696,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (searchInput) {
 
-
         searchInput.addEventListener(
             "input",
             function () {
-
 
                 const searchText =
                     this.value
@@ -647,7 +715,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 cards.forEach(
                     function (card) {
 
-
                         const text =
                             card.innerText
                                 .toLowerCase();
@@ -662,24 +729,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
                         } else {
 
-                            card.style.display = "none";
+                            card.style.display =
+                                "none";
 
                         }
-
 
                     }
                 );
 
-
             }
         );
-
 
     }
 
 
     /* =====================================
-       ESC KEY
+       ESCAPE KEY
     ====================================== */
 
     document.addEventListener(
@@ -690,18 +755,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 closeSidebar();
 
-                if (quickMenu) {
+                closeQuickMenu();
 
-                    quickMenu.classList.remove(
+                if (notificationDropdown) {
+
+                    notificationDropdown.classList.remove(
                         "show"
-                    );
-
-                }
-
-                if (quickActionBtn) {
-
-                    quickActionBtn.classList.remove(
-                        "active"
                     );
 
                 }
