@@ -444,18 +444,30 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
-    if (sidebarOverlay) {
+/* =====================================
+   CLOSE SIDEBAR WHEN CLICKING OUTSIDE
+===================================== */
 
-        sidebarOverlay.addEventListener(
-            "click",
-            function () {
+document.addEventListener("click", function (event) {
 
-                closeSidebar();
-
-            }
-        );
-
+    if (!sidebar || !sidebar.classList.contains("open")) {
+        return;
     }
+
+    // If the click is inside the sidebar, do nothing
+    if (sidebar.contains(event.target)) {
+        return;
+    }
+
+    // If the click is on the menu button, do nothing
+    if (menuBtn && menuBtn.contains(event.target)) {
+        return;
+    }
+
+    // Otherwise close the sidebar
+    closeSidebar();
+
+});
 
 
     /*
