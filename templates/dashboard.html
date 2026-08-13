@@ -1,29 +1,49 @@
-<div class="page">
+<div class="page dashboard-page">
 
     <!-- =========================================
-         DASHBOARD HEADER
+         DASHBOARD MASCOT
+         ANIMATION SEQUENCE:
+         IDLE → MOVE → EGG APPEARS → DROP → RESET
     ========================================== -->
 
-    <div class="dashboard-header">
+    <section
+        class="dashboard-mascot"
+        aria-label="Kagendo Chicken mascot"
+    >
 
-        <div class="floating-logo">
+        <div class="mascot-art-wrap">
 
-            {% if farm_logo %}
-                <img src="{{ farm_logo }}" alt="Kagendo Chicken">
-            {% else %}
-                🐔
-            {% endif %}
+            <!-- Main Kagendo logo -->
+            <img
+                src="{{ url_for('static', filename='images/Kagendo-Logo.png') }}"
+                class="mascot-art"
+                alt="Kagendo Chicken Farm"
+            >
+
+            <!-- Animated egg -->
+            <div
+                class="laying-egg"
+                aria-hidden="true"
+            >
+                🥚
+            </div>
+
+            <!-- Small ground shadow -->
+            <div
+                class="egg-shadow"
+                aria-hidden="true"
+            ></div>
 
         </div>
 
-    </div>
+    </section>
 
 
     <!-- =========================================
          WELCOME
     ========================================== -->
 
-    <div class="welcome-logo">
+    <div class="welcome-logo dashboard-welcome">
 
         <h1>
             Kagendo Chicken
@@ -38,17 +58,17 @@
 
     <!-- =========================================
          MAIN DASHBOARD CARDS
-         ONLY 4 CARDS
     ========================================== -->
 
     <div class="dashboard-cards">
 
 
-        <!-- =====================================
-             EGGS
-        ====================================== -->
+        <!-- EGGS -->
 
-        <a href="{{ url_for('eggs') }}" class="card-link">
+        <a
+            href="{{ url_for('eggs') }}"
+            class="card-link"
+        >
 
             <article class="dashboard-card eggs-card">
 
@@ -113,11 +133,12 @@
         </a>
 
 
-        <!-- =====================================
-             FARM CASH
-        ====================================== -->
+        <!-- FARM CASH -->
 
-        <a href="{{ url_for('farm_cash') }}" class="card-link">
+        <a
+            href="{{ url_for('farm_cash') }}"
+            class="card-link"
+        >
 
             <article class="dashboard-card cash-card">
 
@@ -166,11 +187,12 @@
         </a>
 
 
-        <!-- =====================================
-             FEED
-        ====================================== -->
+        <!-- FEED -->
 
-        <a href="{{ url_for('feeds') }}" class="card-link">
+        <a
+            href="{{ url_for('feeds') }}"
+            class="card-link"
+        >
 
             <article class="dashboard-card feed-card">
 
@@ -219,11 +241,12 @@
         </a>
 
 
-        <!-- =====================================
-             CHICKS
-        ====================================== -->
+        <!-- CHICKS -->
 
-        <a href="{{ url_for('chicks') }}" class="card-link">
+        <a
+            href="{{ url_for('chicks') }}"
+            class="card-link"
+        >
 
             <article class="dashboard-card chicks-card">
 
@@ -297,9 +320,7 @@
         </div>
 
 
-        <!-- =====================================
-             EGG PRODUCTION
-        ====================================== -->
+        <!-- EGG PRODUCTION -->
 
         <div class="progress-item">
 
@@ -327,9 +348,12 @@
         </div>
 
 
-        <!-- =====================================
-             CHICKS CAPACITY
-        ====================================== -->
+        <!-- CHICKS CAPACITY -->
+
+        {% set chick_percent =
+            ((total_chicks / chick_capacity) * 100)
+            if chick_capacity else 0
+        %}
 
         <div class="progress-item">
 
@@ -340,14 +364,7 @@
                 </span>
 
                 <strong>
-                    {{
-                        (
-                            (total_chicks / chick_capacity) * 100
-                        )
-                        if chick_capacity
-                        else 0
-                    | round(0)
-                    }}%
+                    {{ chick_percent|round(0) }}%
                 </strong>
 
             </div>
@@ -356,13 +373,7 @@
 
                 <div
                     class="progress-fill chicks"
-                    style="width:{{
-                        (
-                            (total_chicks / chick_capacity) * 100
-                        )
-                        if chick_capacity
-                        else 0
-                    }}%;"
+                    style="width:{{ chick_percent }}%;"
                 ></div>
 
             </div>
@@ -370,9 +381,7 @@
         </div>
 
 
-        <!-- =====================================
-             FEED INVENTORY
-        ====================================== -->
+        <!-- FEED INVENTORY -->
 
         <div class="progress-item">
 
@@ -424,9 +433,12 @@
         </div>
 
 
-        <!-- =====================================
-             SALES TARGET
-        ====================================== -->
+        <!-- SALES TARGET -->
+
+        {% set sales_percent =
+            ((sales_today / sales_target) * 100)
+            if sales_target else 0
+        %}
 
         <div class="progress-item">
 
@@ -437,14 +449,7 @@
                 </span>
 
                 <strong>
-                    {{
-                        (
-                            (sales_today / sales_target) * 100
-                        )
-                        if sales_target
-                        else 0
-                    | round(0)
-                    }}%
+                    {{ sales_percent|round(0) }}%
                 </strong>
 
             </div>
@@ -453,13 +458,7 @@
 
                 <div
                     class="progress-fill sales"
-                    style="width:{{
-                        (
-                            (sales_today / sales_target) * 100
-                        )
-                        if sales_target
-                        else 0
-                    }}%;"
+                    style="width:{{ sales_percent }}%;"
                 ></div>
 
             </div>
@@ -480,7 +479,11 @@
         aria-label="Quick actions"
         aria-expanded="false"
     >
-        <span class="quick-action-icon">+</span>
+
+        <span class="quick-plus">
+            +
+        </span>
+
     </button>
 
 
@@ -510,5 +513,6 @@
         </a>
 
     </div>
+
 
 </div>
