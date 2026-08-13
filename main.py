@@ -15,110 +15,28 @@ from firebase_admin import credentials, messaging
 
 app = Flask(__name__, template_folder="templates")
 # Initialize Firebase
-# =========================================================
-# FIREBASE ADMIN SDK
-# =========================================================
+firebase_json = os.getenv("FIREBASE_SERVICE_ACCOUNT")
 
-firebase_app = None
+# Firebase Admin SDK
+firebase_private_key = os.environ.get("FIREBASE_PRIVATE_KEY")
 
-try:
+if firebase_private_key:
+    firebase_private_key = firebase_private_key.replace("\\n", "\n")
 
-    # -----------------------------------------------------
-    # OPTION 1: Complete Firebase service account JSON
-    # -----------------------------------------------------
+firebase_credentials = credentials.Certificate({
+    "type": "service_account",
+    "project_id": os.environ.get("FIREBASE_PROJECT_ID"),
+    "private_key": firebase_private_key,
+    "client_email": os.environ.get("FIREBASE_CLIENT_EMAIL"),
+    "token_uri": "https://oauth2.googleapis.com/token",
+})
 
-    firebase_json = os.getenv("FIREBASE_SERVICE_ACCOUNT")
+if not firebase_admin._apps:
+    firebase_admin.initialize_app(firebase_credentials)
 
-    if firebase_json:
-
-        firebase_data = json.loads(firebase_json)
-
-        firebase_credentials = credentials.Certificate(
-            firebase_data
-        )
-
-        if not firebase_admin._apps:
-            firebase_app = firebase_admin.initialize_app(
-                firebase_credentials
-            )
-        else:
-            firebase_app = firebase_admin.get_app()
-
-        print("Firebase initialized using FIREBASE_SERVICE_ACCOUNT")
-
-
-    else:
-
-        # -------------------------------------------------
-        # OPTION 2: Individual Firebase environment variables
-        # -------------------------------------------------
-
-        firebase_project_id = os.getenv(
-            "FIREBASE_PROJECT_ID"
-        )
-
-        firebase_private_key = os.getenv(
-            "FIREBASE_PRIVATE_KEY"
-        )
-
-        firebase_client_email = os.getenv(
-            "FIREBASE_CLIENT_EMAIL"
-        )
-
-        # Convert escaped \\n into real new lines
-        if firebase_private_key:
-            firebase_private_key = firebase_private_key.replace(
-                "\\n",
-                "\n"
-            )
-
-        # Only initialize Firebase when ALL credentials exist
-        if (
-            firebase_project_id
-            and firebase_private_key
-            and firebase_client_email
-        ):
-
-            firebase_credentials = credentials.Certificate({
-
-                "type": "service_account",
-
-                "project_id": firebase_project_id,
-
-                "private_key": firebase_private_key,
-
-                "client_email": firebase_client_email,
-
-                "token_uri":
-                    "https://oauth2.googleapis.com/token"
-            })
-
-            if not firebase_admin._apps:
-                firebase_app = firebase_admin.initialize_app(
-                    firebase_credentials
-                )
-            else:
-                firebase_app = firebase_admin.get_app()
-
-            print(
-                "Firebase initialized using individual credentials"
-            )
-
-        else:
-
-            print(
-                "Firebase credentials not configured. "
-                "Firebase notifications disabled."
-            )
-
-
-except Exception as e:
-
-    print(
-        f"Firebase initialization failed: {e}"
-    )
-
-    firebase_app = None
+if firebase_json and not firebase_admin._apps:
+    cred = credentials.Certificate(json.loads(firebase_json))
+    firebase_admin.initialize_app(cred)
 
 
 def send_fcm_notification(token, title, body):
