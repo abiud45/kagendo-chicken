@@ -1174,20 +1174,25 @@
             </a>
 
 
-<form
-    method="POST"
-    action="{{ url_for('delete_chick', id=b.id) }}"
-    class="delete-form"
-    onsubmit="console.log('DELETE BUTTON CLICKED - ID:', {{ b.id }}); return confirm('Delete {{ b.batch_number }}?');"
->
+<div class="delete-wrapper">
+
     <button
-        type="submit"
+        type="button"
         class="action-delete"
+        onclick="deleteBatch({{ b.id }}, '{{ b.batch_number }}')"
     >
         🗑️ Delete
     </button>
-</form>
 
+    <form
+        id="delete-form-{{ b.id }}"
+        method="POST"
+        action="{{ url_for('delete_chick', id=b.id) }}"
+        style="display:none;"
+    >
+    </form>
+
+</div>
 
         </div>
 
@@ -1260,3 +1265,16 @@
 
 
 </div>
+
+<script>
+function deleteBatch(id, batch) {
+
+    if (!confirm("Delete batch " + batch + "?")) {
+        return;
+    }
+
+    document
+        .getElementById("delete-form-" + id)
+        .submit();
+}
+</script>
