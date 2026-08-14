@@ -59,110 +59,58 @@
 <div class="egg-tabs" role="tablist">
 
     <!-- COLLECTION -->
-
     <button
         type="button"
         class="egg-tab active"
         data-tab="collection"
     >
-
-        <span class="tab-icon">
-            🥚
-        </span>
+        <span class="tab-icon">🥚</span>
 
         <span class="tab-content">
-
-            <strong>
-                Collection
-            </strong>
-
-            <small>
-                {{ rows|length }} Records
-            </small>
-
+            <strong>Collection</strong>
         </span>
-
     </button>
 
 
     <!-- ADJUSTMENTS -->
-
     <button
         type="button"
         class="egg-tab"
         data-tab="adjustment"
     >
-
-        <span class="tab-icon">
-            ➖
-        </span>
+        <span class="tab-icon">➖</span>
 
         <span class="tab-content">
-
-            <strong>
-                Adjustments
-            </strong>
-
-            <small>
-                {{ adjustments|length }} Records
-            </small>
-
+            <strong>Adjustments</strong>
         </span>
-
     </button>
 
 
-    <!-- INDIVIDUAL SALES -->
-
+    <!-- EGG SALES -->
     <button
         type="button"
         class="egg-tab"
         data-tab="sales"
     >
-
-        <span class="tab-icon">
-            💰
-        </span>
+        <span class="tab-icon">💰</span>
 
         <span class="tab-content">
-
-            <strong>
-                Egg Sales
-            </strong>
-
-            <small>
-                {{ sales_rows|length }} Records
-            </small>
-
+            <strong>Egg Sales</strong>
         </span>
-
     </button>
 
 
     <!-- CRATE SALES -->
-
     <button
         type="button"
         class="egg-tab"
         data-tab="crate-sales"
     >
-
-        <span class="tab-icon">
-            📦
-        </span>
+        <span class="tab-icon">📦</span>
 
         <span class="tab-content">
-
-            <strong>
-                Crate Sales
-            </strong>
-
-            <small>
-                {{ crate_sales_rows|length }} Records
-            </small>
-
+            <strong>Crate Sales</strong>
         </span>
-
     </button>
 
 </div>
@@ -345,12 +293,12 @@
 
                     <div class="history-actions">
 
-                        <a
-                            href="{{ url_for('eggs', edit=r.id) }}"
-                            class="edit-btn"
-                        >
-                            Edit
-                        </a>
+                    <a
+                        href="{{ url_for('eggs', edit=r.id) }}"
+                        class="edit-btn"
+                    >
+                        ✏️ Edit
+                    </a>
 
 
                         <form
@@ -358,13 +306,13 @@
                             action="{{ url_for('delete_egg', id=r.id) }}"
                         >
 
-                            <button
-                                type="submit"
-                                class="delete-btn"
-                                onclick="return confirm('Delete this egg collection record?')"
-                            >
-                                Delete
-                            </button>
+                          <button
+                              type="submit"
+                              class="delete-btn"
+                              onclick="return confirm('Delete this egg collection record?')"
+                          >
+                              🗑️ Delete
+                          </button>
 
                         </form>
 
@@ -938,7 +886,7 @@
                         href="{{ url_for('sales', edit=r.id) }}"
                         class="edit-btn"
                     >
-                        Edit
+                       ✏️ Edit
                     </a>
 
 
@@ -952,7 +900,7 @@
                             class="delete-btn"
                             onclick="return confirm('Delete this sale?')"
                         >
-                            Delete
+                           🗑️ Delete
                         </button>
 
                     </form>
@@ -1186,7 +1134,7 @@
                         href="{{ url_for('crate_sales', edit=r.id) }}"
                         class="edit-btn"
                     >
-                        Edit
+                       ✏️ Edit
                     </a>
 
 
@@ -1200,7 +1148,7 @@
                             class="delete-btn"
                             onclick="return confirm('Delete this crate sale?')"
                         >
-                            Delete
+                           🗑️ Delete
                         </button>
 
                     </form>
