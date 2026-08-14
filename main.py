@@ -2566,18 +2566,6 @@ def farm_settings():
     )
 
 
-@app.route("/delete_reminder/<int:id>", methods=["POST"])
-def delete_reminder(id):
-    reminder = Reminder.query.get_or_404(id)
-
-    db.session.delete(reminder)
-    db.session.commit()
-
-    flash("Reminder deleted successfully.", "success")
-
-    return redirect(url_for("reminders"))
-
-
 from datetime import datetime
 
 
