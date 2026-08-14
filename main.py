@@ -440,11 +440,6 @@ class CashWithdrawal(db.Model):
     withdrawal_date = db.Column(db.Date, default=date.today)
     notes = db.Column(db.Text)
 
-class DeviceToken(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    token = db.Column(db.String(300), unique=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
 class FCMToken(db.Model):
     __tablename__ = "fcm_tokens"
 
