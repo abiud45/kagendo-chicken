@@ -1365,61 +1365,6 @@ def sales():
         today=date.today().isoformat(),
     )
 
-
-@app.route("/delete-egg/<int:id>", methods=["POST"])
-def delete_egg(id):
-    record = Egg.query.get_or_404(id)
-
-    db.session.delete(record)
-    db.session.commit()
-
-    flash("Egg record deleted successfully.", "success")
-
-    return redirect(url_for("eggs"))
-
-@app.route("/delete_feed/<int:id>", methods=["POST"])
-def delete_feed(id):
-    feed = Feed.query.get_or_404(id)
-
-    if feed.records:
-        flash(
-            "Cannot delete this feed bag because it has feeding history.",
-            "danger"
-        )
-        return redirect(url_for("feeds"))
-
-    db.session.delete(feed)
-    db.session.commit()
-
-    flash("Feed bag deleted successfully.", "success")
-
-    return redirect(url_for("feeds"))
-
-
-@app.route("/delete-sale/<int:id>", methods=["POST"])
-def delete_sale(id):
-    record = Sale.query.get_or_404(id)
-
-    db.session.delete(record)
-    db.session.commit()
-
-    flash("Sale deleted successfully.", "success")
-
-    return redirect(url_for("sales"))
-
-
-@app.route("/delete-crate-sale/<int:id>", methods=["POST"])
-def delete_crate_sale(id):
-    record = CrateSale.query.get_or_404(id)
-
-    db.session.delete(record)
-    db.session.commit()
-
-    flash("Crate sale deleted successfully.", "success")
-
-    return redirect(url_for("crate_sales"))
-
-
 @app.route("/crate-sales", methods=["GET", "POST"])
 def crate_sales():
     if request.method == "POST":
@@ -1516,33 +1461,17 @@ def chicks():
     search = request.args.get("search", "").strip()
     status = request.args.get("status", "").strip()
 
-    # ---------------------------------------------------------
-    # BASE QUERY
-    # ---------------------------------------------------------
-
     query = ChickBatch.query
-
-
-    # ---------------------------------------------------------
-    # SEARCH
-    # ---------------------------------------------------------
 
     if search:
 
-        search_term = f"%{search}%"
-
         query = query.filter(
             db.or_(
-                ChickBatch.batch_number.ilike(search_term),
-                ChickBatch.breed.ilike(search_term),
-                ChickBatch.supplier.ilike(search_term)
+                ChickBatch.batch_number.ilike(f"%{search}%"),
+                ChickBatch.breed.ilike(f"%{search}%"),
+                ChickBatch.supplier.ilike(f"%{search}%")
             )
         )
-
-
-    # ---------------------------------------------------------
-    # STATUS FILTER
-    # ---------------------------------------------------------
 
     if status:
 
@@ -1550,19 +1479,9 @@ def chicks():
             ChickBatch.status == status
         )
 
-
-    # ---------------------------------------------------------
-    # GET BATCHES
-    # ---------------------------------------------------------
-
     batches = query.order_by(
         ChickBatch.purchase_date.desc()
     ).all()
-
-
-    # ---------------------------------------------------------
-    # CALCULATE BATCH FEED INFORMATION
-    # ---------------------------------------------------------
 
     for b in batches:
 
@@ -1575,11 +1494,6 @@ def chicks():
             r.cost or 0
             for r in b.feed_records
         )
-
-
-    # ---------------------------------------------------------
-    # FARM TOTALS
-    # ---------------------------------------------------------
 
     total = sum(
         x.quantity or 0
@@ -1598,33 +1512,15 @@ def chicks():
 
     alive = total - dead - sold
 
-
-    # ---------------------------------------------------------
-    # PREVENT NEGATIVE ALIVE COUNT
-    # ---------------------------------------------------------
-
-    alive = max(alive, 0)
-
-
-    # ---------------------------------------------------------
-    # RENDER
-    # ---------------------------------------------------------
-
     return page(
         "Chick Management",
         "chicks.html",
-
         batches=batches,
-
         total=total,
         alive=alive,
         dead=dead,
         sold=sold,
-
-        today=date.today(),
-
-        search=search,
-        status=status,
+        today=date.today()
     )
 
 @app.route("/chick-details/<int:id>")
