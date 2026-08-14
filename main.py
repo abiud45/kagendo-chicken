@@ -1536,12 +1536,6 @@ def chicks():
             for r in b.feed_records
         )
 
-        # Current birds remaining in this batch
-        b.alive = (
-            (b.quantity or 0)
-            - (b.dead or 0)
-            - (b.sold or 0)
-        )
 
     total = sum(
         x.quantity or 0
