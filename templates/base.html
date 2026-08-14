@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>{{ title }} | Kagendo Farm</title>
+
+
+    <!-- =========================================
+         GOOGLE FONT
+    ========================================== -->
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+          rel="stylesheet">
+
+
+    <!-- =========================================
+         MAIN CSS
+    ========================================== -->
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+
+    {% if feed_css %}
+
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/feeds.css') }}">
+
+    {% endif %}
+
+
+    {% block head %}{% endblock %}
+
+</head>
+
+
+<body>
+
+
+<!-- =========================================
+     MOBILE SIDEBAR OVERLAY
+========================================= -->
+
+<div
+    class="sidebar-overlay"
+    id="sidebarOverlay">
+</div>
+
+
+<!-- =========================================
+     SIDEBAR
+========================================= -->
+
+<div
+    class="sidebar"
+    id="sidebar"
+>
+
+    <!-- LOGO -->
+
+    <div class="logo">
+
+        <span class="logo-icon">
+            🐔
+        </span>
+
+        <div>
+
+            <h2>
+                Kagendo
+            </h2>
+
+            <small>
+                Farm Manager
+            </small>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================
+         NAVIGATION
+    ====================================== -->
+
+    <nav class="sidebar-menu">
+
+
+        <!-- DASHBOARD -->
+
+        <a
+            class="sidebar-link {% if title == 'Dashboard' %}active{% endif %}"
+            href="{{ url_for('dashboard') }}"
+        >
+            🏠 Dashboard
+        </a>
+
+
+        <!-- EGGS -->
+
+        <a
+            class="sidebar-link {% if title == 'Eggs' %}active{% endif %}"
+            href="{{ url_for('eggs') }}"
+        >
+            🥚 Eggs
+        </a>
+
+
+        <!-- CHICKS -->
+
+        <a
+            class="sidebar-link {% if title == 'Chick Management' %}active{% endif %}"
+            href="{{ url_for('chicks') }}"
+        >
+            🐥 Chick Management
+        </a>
+
+
+        <!-- FEEDS -->
+
+        <a
+            class="sidebar-link {% if title == 'Feeds' %}active{% endif %}"
+            href="{{ url_for('feeds') }}"
+        >
+            🌾 Feed
+        </a>
+
+
+        <!-- INVENTORY -->
+
+        <a
+            class="sidebar-link {% if title == 'Inventory' %}active{% endif %}"
+            href="{{ url_for('inventory') }}"
+        >
+            📦 Inventory
+        </a>
+
+
+        <!-- FARM CASH -->
+
+        <a
+            class="sidebar-link {% if title == 'Farm Cash' %}active{% endif %}"
+            href="{{ url_for('farm_cash') }}"
+        >
+            💵 Withdraw Cash
+        </a>
+
+
+        <!-- REMINDERS -->
+
+        <a
+            class="sidebar-link {% if title == 'Reminders' %}active{% endif %}"
+            href="{{ url_for('reminders') }}"
+        >
+            🔔 Reminders
+        </a>
+
+
+        <!-- FARM SETTINGS -->
+
+        <a
+            class="sidebar-link {% if title == 'Farm Settings' %}active{% endif %}"
+            href="{{ url_for('farm_settings') }}"
+        >
+            ⚙️ Farm Settings
+        </a>
+
+
+        <!-- CREDIT SALES -->
+
+        <a
+            class="sidebar-link {% if title == 'Credit Sales' %}active{% endif %}"
+            href="{{ url_for('credit_sales') }}"
+        >
+            💳 Credit Sales
+        </a>
+
+
+    </nav>
+
+</div>
+
+
+<!-- =========================================
+     MAIN CONTENT
+========================================= -->
+
+<div
+    class="content"
+    id="content"
+>
+
+
+    <!-- =====================================
+         TOP BAR
+    ====================================== -->
+
+    <header class="topbar">
+
+
+        <!-- LEFT -->
+
+        <div class="top-left">
+
+            <button
+                class="menu-btn"
+                id="menuBtn"
+                type="button"
+                aria-label="Toggle navigation"
+                aria-expanded="false"
+            >
+                ☰
+            </button>
+
+            <span class="brand-logo">
+                🐔
+            </span>
+
+            <span class="brand-name">
+                Kagendo
+            </span>
+
+        </div>
+
+
+        <!-- RIGHT -->
+
+        <div class="top-actions">
+
+
+            <!-- SEARCH -->
+
+            <div class="search-box">
+
+                <input
+                    type="text"
+                    placeholder="Search..."
+                    id="globalSearch"
+                >
+
+            </div>
+
+
+            <!-- NOTIFICATIONS -->
+
+            <div class="notification-container">
+
+                <button
+                    id="notification-btn"
+                    class="notification-btn"
+                    type="button"
+                    aria-label="Notifications"
+                >
+
+                    🔔
+
+                    <span id="notification-count">
+                        {{ notification_count|default(0) }}
+                    </span>
+
+                </button>
+
+
+                <div
+                    id="notification-dropdown"
+                    class="notification-dropdown"
+                >
+
+                    {% if notifications %}
+
+                        {% for note in notifications %}
+
+                            <div class="notification-item">
+                                {{ note }}
+                            </div>
+
+                        {% endfor %}
+
+                    {% else %}
+
+                        <div class="notification-item">
+                            No notifications 🎉
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+            <!-- PROFILE -->
+
+            <button
+                class="profile-btn"
+                title="Profile"
+                type="button"
+            >
+                👤
+            </button>
+
+
+        </div>
+
+
+    </header>
+
+
+    <!-- =====================================
+         PAGE CONTENT
+    ====================================== -->
+
+    <main class="page">
+
+        {% block content %}
+
+            {{ body|safe }}
+
+        {% endblock %}
+
+    </main>
+
+
+</div>
+
+
+<!-- =========================================
+     JAVASCRIPT
+========================================= -->
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+
+    /* =====================================
+       SIDEBAR
+    ====================================== */
+
+    const sidebar =
+        document.getElementById("sidebar");
+
+    const menuBtn =
+        document.getElementById("menuBtn");
+
+    const sidebarOverlay =
+        document.getElementById("sidebarOverlay");
+
+
+    function openSidebar() {
+
+        if (!sidebar) {
+            return;
+        }
+
+        sidebar.classList.add("open");
+
+        if (sidebarOverlay) {
+            sidebarOverlay.classList.add("show");
+        }
+
+        if (menuBtn) {
+
+            menuBtn.classList.add("active");
+
+            menuBtn.setAttribute(
+                "aria-expanded",
+                "true"
+            );
+
+        }
+
+    }
+
+
+    function closeSidebar() {
+
+        if (!sidebar) {
+            return;
+        }
+
+        sidebar.classList.remove("open");
+
+        if (sidebarOverlay) {
+            sidebarOverlay.classList.remove("show");
+        }
+
+        if (menuBtn) {
+
+            menuBtn.classList.remove("active");
+
+            menuBtn.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+
+        }
+
+    }
+
+
+    function toggleSidebar() {
+
+        if (!sidebar) {
+            return;
+        }
+
+        if (sidebar.classList.contains("open")) {
+
+            closeSidebar();
+
+        } else {
+
+            openSidebar();
+
+        }
+
+    }
+
+
+    if (menuBtn) {
+
+        menuBtn.addEventListener(
+            "click",
+            function (event) {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                toggleSidebar();
+
+            }
+        );
+
+    }
+
+
+    /* =====================================
+       CLOSE SIDEBAR WHEN CLICKING OUTSIDE
+    ====================================== */
+
+    document.addEventListener("click", function (event) {
+
+        if (!sidebar || !sidebar.classList.contains("open")) {
+            return;
+        }
+
+        if (sidebar.contains(event.target)) {
+            return;
+        }
+
+        if (menuBtn && menuBtn.contains(event.target)) {
+            return;
+        }
+
+        closeSidebar();
+
+    });
+
+
+    /* =====================================
+       CLOSE SIDEBAR AFTER NAVIGATION
+    ====================================== */
+
+    if (sidebar) {
+
+        const sidebarLinks =
+            sidebar.querySelectorAll(
+                ".sidebar-menu a"
+            );
+
+
+        sidebarLinks.forEach(
+            function (link) {
+
+                link.addEventListener(
+                    "click",
+                    function () {
+
+                        closeSidebar();
+
+                    }
+                );
+
+            }
+        );
+
+    }
+
+
+    /* =====================================
+       CLOSE SIDEBAR ON DESKTOP
+    ====================================== */
+
+    window.addEventListener(
+        "resize",
+        function () {
+
+            if (window.innerWidth > 900) {
+
+                closeSidebar();
+
+            }
+
+        }
+    );
+
+
+    /* =====================================
+       NOTIFICATIONS
+    ====================================== */
+
+    const notificationBtn =
+        document.getElementById(
+            "notification-btn"
+        );
+
+    const notificationDropdown =
+        document.getElementById(
+            "notification-dropdown"
+        );
+
+
+    if (
+        notificationBtn &&
+        notificationDropdown
+    ) {
+
+        notificationBtn.addEventListener(
+            "click",
+            function (event) {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                notificationDropdown.classList.toggle(
+                    "show"
+                );
+
+            }
+        );
+
+
+        notificationDropdown.addEventListener(
+            "click",
+            function (event) {
+
+                event.stopPropagation();
+
+            }
+        );
+
+    }
+
+
+    /* =====================================
+       QUICK ACTION MENU
+    ====================================== */
+
+    const quickActionBtn =
+        document.getElementById(
+            "quickActionBtn"
+        );
+
+    const quickMenu =
+        document.getElementById(
+            "quickMenu"
+        );
+
+
+    function closeQuickMenu() {
+
+        if (quickMenu) {
+
+            quickMenu.classList.remove(
+                "show"
+            );
+
+        }
+
+        if (quickActionBtn) {
+
+            quickActionBtn.classList.remove(
+                "active"
+            );
+
+        }
+
+    }
+
+
+    function toggleQuickMenu() {
+
+        if (
+            !quickActionBtn ||
+            !quickMenu
+        ) {
+            return;
+        }
+
+
+        const isOpen =
+            quickMenu.classList.contains(
+                "show"
+            );
+
+
+        if (isOpen) {
+
+            closeQuickMenu();
+
+        } else {
+
+            quickMenu.classList.add(
+                "show"
+            );
+
+            quickActionBtn.classList.add(
+                "active"
+            );
+
+        }
+
+    }
+
+
+    if (quickActionBtn) {
+
+        quickActionBtn.addEventListener(
+            "click",
+            function (event) {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                toggleQuickMenu();
+
+            }
+        );
+
+    }
+
+
+    if (quickMenu) {
+
+        quickMenu.addEventListener(
+            "click",
+            function (event) {
+
+                event.stopPropagation();
+
+            }
+        );
+
+    }
+
+
+    /* =====================================
+       GLOBAL CLICK
+    ====================================== */
+
+    document.addEventListener(
+        "click",
+        function () {
+
+            if (notificationDropdown) {
+
+                notificationDropdown.classList.remove(
+                    "show"
+                );
+
+            }
+
+            closeQuickMenu();
+
+        }
+    );
+
+
+    /* =====================================
+       SEARCH
+    ====================================== */
+
+    const searchInput =
+        document.getElementById(
+            "globalSearch"
+        );
+
+
+    if (searchInput) {
+
+        searchInput.addEventListener(
+            "input",
+            function () {
+
+                const searchText =
+                    this.value
+                        .toLowerCase()
+                        .trim();
+
+
+                const cards =
+                    document.querySelectorAll(
+                        ".dashboard-card, .summary-card, .summary-box"
+                    );
+
+
+                cards.forEach(
+                    function (card) {
+
+                        const text =
+                            card.innerText
+                                .toLowerCase();
+
+
+                        if (
+                            searchText === "" ||
+                            text.includes(searchText)
+                        ) {
+
+                            card.style.display = "";
+
+                        } else {
+
+                            card.style.display =
+                                "none";
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+    }
+
+
+    /* =====================================
+       ESCAPE KEY
+    ====================================== */
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (event.key === "Escape") {
+
+                closeSidebar();
+
+                closeQuickMenu();
+
+                if (notificationDropdown) {
+
+                    notificationDropdown.classList.remove(
+                        "show"
+                    );
+
+                }
+
+            }
+
+        }
+    );
+
+
+});
+
+</script>
+
+
+{% block scripts %}{% endblock %}
+
+
+</body>
+
+</html>
