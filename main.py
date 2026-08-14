@@ -1298,25 +1298,6 @@ def feeds():
     )
 
 
-@app.route("/delete_feed/<int:id>", methods=["POST"])
-def delete_feed(id):
-    feed = Feed.query.get_or_404(id)
-
-    if feed.records:
-        flash(
-            "Cannot delete this feed bag because it has feeding history.",
-            "danger"
-        )
-        return redirect(url_for("feeds"))
-
-    db.session.delete(feed)
-    db.session.commit()
-
-    flash("Feed bag deleted successfully.", "success")
-
-    return redirect(url_for("feeds"))
-
-
 @app.route("/sales", methods=["GET", "POST"])
 def sales():
     if request.method == "POST":
