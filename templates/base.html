@@ -1,0 +1,2459 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>{{ title }} | Kagendo Farm</title>
+
+
+    <!-- =========================================
+         GOOGLE FONT
+    ========================================== -->
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+
+    <!-- =========================================
+         MAIN CSS
+    ========================================== -->
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+
+    {% if feed_css %}
+
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='css/feeds.css') }}"
+        >
+
+    {% endif %}
+
+
+    {% block head %}{% endblock %}
+
+
+    <!-- =========================================
+         SIDEBAR + LAYOUT + FAB CSS
+    ========================================== -->
+
+    <style>
+
+        :root {
+
+            --sidebar-width: 270px;
+            --sidebar-collapsed-width: 82px;
+
+            --sidebar-bg: #0f172a;
+            --sidebar-card: #172033;
+
+            --sidebar-text: #cbd5e1;
+            --sidebar-muted: #64748b;
+
+            --sidebar-hover: #1e293b;
+
+            --sidebar-active: #2563eb;
+
+            --sidebar-active-light:
+                rgba(37, 99, 235, .15);
+
+        }
+
+
+        /* =====================================
+           BODY
+        ====================================== */
+
+        body {
+
+            margin: 0;
+
+            font-family: "Poppins", sans-serif;
+
+        }
+
+
+        /* =====================================
+           SIDEBAR
+        ====================================== */
+
+        .sidebar {
+
+            position: fixed;
+
+            top: 0;
+            left: 0;
+
+            width: var(--sidebar-width);
+            height: 100vh;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    #0f172a 0%,
+                    #111827 100%
+                );
+
+            color: white;
+
+            display: flex;
+            flex-direction: column;
+
+            z-index: 1000;
+
+            box-shadow:
+                8px 0 30px rgba(0,0,0,.08);
+
+            transition:
+                width .3s ease,
+                transform .3s ease;
+
+            overflow: hidden;
+
+        }
+
+
+        /* =====================================
+           SIDEBAR BRAND
+        ====================================== */
+
+        .sidebar-brand {
+
+            height: 82px;
+
+            padding: 0 18px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+            border-bottom:
+                1px solid rgba(255,255,255,.06);
+
+            position: relative;
+
+            flex-shrink: 0;
+
+        }
+
+
+        .brand-logo {
+
+            width: 46px;
+            height: 46px;
+
+            border-radius: 14px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            font-size: 25px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #2563eb,
+                    #16a34a
+                );
+
+            box-shadow:
+                0 8px 20px rgba(37,99,235,.25);
+
+            flex-shrink: 0;
+
+        }
+
+
+        .brand-text {
+
+            min-width: 0;
+
+        }
+
+
+        .brand-text h2 {
+
+            margin: 0;
+
+            font-size: 20px;
+
+            font-weight: 800;
+
+            letter-spacing: -.4px;
+
+        }
+
+
+        .brand-text span {
+
+            display: block;
+
+            margin-top: 2px;
+
+            color: #94a3b8;
+
+            font-size: 11px;
+
+            font-weight: 600;
+
+        }
+
+
+        /* =====================================
+           COLLAPSE BUTTON
+        ====================================== */
+
+        .sidebar-collapse {
+
+            position: absolute;
+
+            right: 10px;
+            top: 27px;
+
+            width: 28px;
+            height: 28px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background:
+                rgba(255,255,255,.06);
+
+            color: #94a3b8;
+
+            font-size: 23px;
+
+            cursor: pointer;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            transition: .2s ease;
+
+        }
+
+
+        .sidebar-collapse:hover {
+
+            background:
+                rgba(255,255,255,.12);
+
+            color: white;
+
+        }
+
+
+        /* =====================================
+           SIDEBAR MENU
+        ====================================== */
+
+        .sidebar-menu {
+
+            flex: 1;
+
+            padding: 20px 12px;
+
+            overflow-y: auto;
+
+        }
+
+
+        .sidebar-menu::-webkit-scrollbar {
+
+            width: 4px;
+
+        }
+
+
+        .sidebar-menu::-webkit-scrollbar-thumb {
+
+            background: #334155;
+
+            border-radius: 10px;
+
+        }
+
+
+        /* =====================================
+           SECTION TITLE
+        ====================================== */
+
+        .nav-section-title {
+
+            padding:
+                14px 12px 8px;
+
+            color: #64748b;
+
+            font-size: 10px;
+
+            font-weight: 800;
+
+            letter-spacing: 1.2px;
+
+        }
+
+
+        /* =====================================
+           SIDEBAR LINK
+        ====================================== */
+
+        .sidebar-link {
+
+            position: relative;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+            width: 100%;
+
+            min-height: 48px;
+
+            padding: 0 12px;
+
+            margin-bottom: 5px;
+
+            box-sizing: border-box;
+
+            border-radius: 13px;
+
+            color: var(--sidebar-text);
+
+            text-decoration: none;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            transition:
+                background .2s ease,
+                color .2s ease,
+                transform .2s ease;
+
+        }
+
+
+        .sidebar-link:hover {
+
+            background:
+                var(--sidebar-hover);
+
+            color: white;
+
+            transform:
+                translateX(2px);
+
+        }
+
+
+        /* =====================================
+           NAV ICON
+        ====================================== */
+
+        .nav-icon {
+
+            width: 34px;
+            height: 34px;
+
+            border-radius: 10px;
+
+            background:
+                rgba(255,255,255,.05);
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            font-size: 17px;
+
+            flex-shrink: 0;
+
+            transition: .2s ease;
+
+        }
+
+
+        .sidebar-link:hover .nav-icon {
+
+            background:
+                rgba(255,255,255,.10);
+
+        }
+
+
+        /* =====================================
+           ACTIVE LINK
+        ====================================== */
+
+        .sidebar-link.active {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(37,99,235,.22),
+                    rgba(37,99,235,.10)
+                );
+
+            color: white;
+
+            box-shadow:
+                inset 0 0 0 1px
+                rgba(37,99,235,.15);
+
+        }
+
+
+        .sidebar-link.active::before {
+
+            content: "";
+
+            position: absolute;
+
+            left: 0;
+
+            top: 9px;
+            bottom: 9px;
+
+            width: 4px;
+
+            border-radius:
+                0 5px 5px 0;
+
+            background:
+                #3b82f6;
+
+        }
+
+
+        .sidebar-link.active .nav-icon {
+
+            background:
+                rgba(37,99,235,.25);
+
+        }
+
+
+        /* =====================================
+           REMINDER BADGE
+        ====================================== */
+
+        .reminder-link {
+
+            position: relative;
+
+        }
+
+
+        .nav-badge {
+
+            margin-left: auto;
+
+            width: 20px;
+            height: 20px;
+
+            border-radius: 50%;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            background: #ef4444;
+
+            color: white;
+
+            font-size: 11px;
+
+            font-weight: 800;
+
+            box-shadow:
+                0 0 0 3px #0f172a;
+
+        }
+
+
+        /* =====================================
+           SIDEBAR BOTTOM
+        ====================================== */
+
+        .sidebar-bottom {
+
+            padding: 14px;
+
+            border-top:
+                1px solid rgba(255,255,255,.06);
+
+            flex-shrink: 0;
+
+        }
+
+
+        .farm-status-card {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 11px;
+
+            padding: 12px;
+
+            border-radius: 14px;
+
+            background:
+                rgba(255,255,255,.045);
+
+        }
+
+
+        .status-icon {
+
+            width: 38px;
+            height: 38px;
+
+            border-radius: 11px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            background:
+                rgba(22,163,74,.15);
+
+            font-size: 18px;
+
+        }
+
+
+        .status-info strong {
+
+            display: block;
+
+            font-size: 12px;
+
+            color: #e2e8f0;
+
+        }
+
+
+        .status-info span {
+
+            display: block;
+
+            margin-top: 3px;
+
+            color: #4ade80;
+
+            font-size: 11px;
+
+            font-weight: 700;
+
+        }
+
+
+        .sidebar-version {
+
+            text-align: center;
+
+            margin-top: 10px;
+
+            color: #475569;
+
+            font-size: 9px;
+
+        }
+
+
+        /* =====================================
+           COLLAPSED SIDEBAR
+        ====================================== */
+
+        .sidebar.collapsed {
+
+            width:
+                var(--sidebar-collapsed-width);
+
+        }
+
+
+        .sidebar.collapsed .brand-text,
+        .sidebar.collapsed .nav-text,
+        .sidebar.collapsed .nav-section-title,
+        .sidebar.collapsed .farm-status-card,
+        .sidebar.collapsed .sidebar-version {
+
+            display: none;
+
+        }
+
+
+        .sidebar.collapsed .sidebar-brand {
+
+            justify-content: center;
+
+            padding: 0;
+
+        }
+
+
+        .sidebar.collapsed .sidebar-collapse {
+
+            display: none;
+
+        }
+
+
+        .sidebar.collapsed .sidebar-link {
+
+            justify-content: center;
+
+            padding: 0;
+
+        }
+
+
+        .sidebar.collapsed .nav-badge {
+
+            position: absolute;
+
+            top: 5px;
+            right: 7px;
+
+            width: 15px;
+            height: 15px;
+
+            font-size: 8px;
+
+            box-shadow: none;
+
+        }
+
+
+        .sidebar.collapsed .sidebar-bottom {
+
+            padding:
+                12px 10px;
+
+        }
+
+
+        /* =====================================
+           CONTENT
+        ====================================== */
+
+        .content {
+
+            margin-left:
+                var(--sidebar-width);
+
+            min-height: 100vh;
+
+            transition:
+                margin-left .3s ease;
+
+        }
+
+
+        .sidebar.collapsed ~ .content {
+
+            margin-left:
+                var(--sidebar-collapsed-width);
+
+        }
+
+
+        /* =====================================
+           TOPBAR
+        ====================================== */
+
+        .topbar {
+
+            min-height: 70px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            padding:
+                0 25px;
+
+            background: white;
+
+            border-bottom:
+                1px solid #e5e7eb;
+
+            position: sticky;
+
+            top: 0;
+
+            z-index: 900;
+
+        }
+
+
+        .top-left {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+        }
+
+
+        .top-left .brand-logo {
+
+            width: 38px;
+            height: 38px;
+
+            font-size: 20px;
+
+            border-radius: 11px;
+
+        }
+
+
+        .brand-name {
+
+            font-weight: 800;
+
+            font-size: 18px;
+
+            color: #0f172a;
+
+        }
+
+
+        /* =====================================
+           MOBILE MENU BUTTON
+        ====================================== */
+
+        .menu-btn {
+
+            display: none;
+
+            border: none;
+
+            background:
+                #f1f5f9;
+
+            width: 42px;
+            height: 42px;
+
+            border-radius: 11px;
+
+            font-size: 21px;
+
+            cursor: pointer;
+
+        }
+
+
+        /* =====================================
+           TOP ACTIONS
+        ====================================== */
+
+        .top-actions {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+        }
+
+
+        /* =====================================
+           SEARCH
+        ====================================== */
+
+        .search-box input {
+
+            width: 200px;
+
+            height: 40px;
+
+            padding:
+                0 14px;
+
+            border:
+                1px solid #e2e8f0;
+
+            border-radius: 11px;
+
+            outline: none;
+
+            font-family:
+                "Poppins", sans-serif;
+
+        }
+
+
+        .search-box input:focus {
+
+            border-color:
+                #2563eb;
+
+            box-shadow:
+                0 0 0 3px
+                rgba(37,99,235,.10);
+
+        }
+
+
+        /* =====================================
+           NOTIFICATIONS
+        ====================================== */
+
+        .notification-container {
+
+            position: relative;
+
+        }
+
+
+        .notification-btn {
+
+            position: relative;
+
+            width: 42px;
+            height: 42px;
+
+            border: none;
+
+            border-radius: 11px;
+
+            background:
+                #f1f5f9;
+
+            cursor: pointer;
+
+            font-size: 18px;
+
+        }
+
+
+        #notification-count {
+
+            position: absolute;
+
+            top: -4px;
+            right: -4px;
+
+            min-width: 17px;
+            height: 17px;
+
+            padding: 0 4px;
+
+            border-radius: 20px;
+
+            background:
+                #ef4444;
+
+            color: white;
+
+            font-size: 9px;
+
+            font-weight: 800;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+        }
+
+
+        .notification-dropdown {
+
+            position: absolute;
+
+            top: 52px;
+
+            right: 0;
+
+            width: 300px;
+
+            background: white;
+
+            border-radius: 15px;
+
+            box-shadow:
+                0 15px 40px
+                rgba(0,0,0,.15);
+
+            border:
+                1px solid #e5e7eb;
+
+            overflow: hidden;
+
+            opacity: 0;
+
+            visibility: hidden;
+
+            transform:
+                translateY(-8px);
+
+            transition:
+                .2s ease;
+
+        }
+
+
+        .notification-dropdown.show {
+
+            opacity: 1;
+
+            visibility: visible;
+
+            transform:
+                translateY(0);
+
+        }
+
+
+        .notification-item {
+
+            padding: 14px 16px;
+
+            font-size: 13px;
+
+            color: #334155;
+
+            border-bottom:
+                1px solid #f1f5f9;
+
+        }
+
+
+        /* =====================================
+           PROFILE
+        ====================================== */
+
+        .profile-btn {
+
+            width: 42px;
+            height: 42px;
+
+            border: none;
+
+            border-radius: 11px;
+
+            background:
+                #f1f5f9;
+
+            cursor: pointer;
+
+            font-size: 18px;
+
+        }
+
+
+        /* =====================================
+           PAGE
+        ====================================== */
+
+        .page {
+
+            padding: 25px;
+
+        }
+
+
+        /* =====================================
+           MOBILE OVERLAY
+        ====================================== */
+
+        .sidebar-overlay {
+
+            position: fixed;
+
+            inset: 0;
+
+            background:
+                rgba(15,23,42,.45);
+
+            backdrop-filter:
+                blur(2px);
+
+            z-index: 999;
+
+            display: none;
+
+        }
+
+
+        .sidebar-overlay.show {
+
+            display: block;
+
+        }
+
+
+        /* =====================================
+           FLOATING ACTION CONTAINER
+        ====================================== */
+
+        .quick-action-container {
+
+            position: fixed;
+
+            right: 25px;
+
+            bottom: 25px;
+
+            z-index: 2000;
+
+        }
+
+
+        /* =====================================
+           FAB
+        ====================================== */
+
+        .quick-action-btn {
+
+            width: 60px;
+            height: 60px;
+
+            border: none;
+
+            border-radius: 50%;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #2563eb,
+                    #16a34a
+                );
+
+            color: white;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            cursor: pointer;
+
+            box-shadow:
+                0 10px 25px
+                rgba(0,0,0,.25);
+
+            transition:
+                transform .25s ease,
+                box-shadow .25s ease;
+
+        }
+
+
+        .quick-action-btn:hover {
+
+            transform:
+                scale(1.08);
+
+            box-shadow:
+                0 14px 30px
+                rgba(0,0,0,.30);
+
+        }
+
+
+        .quick-plus {
+
+            font-size: 32px;
+
+            font-weight: 300;
+
+            line-height: 1;
+
+            transition:
+                transform .25s ease;
+
+        }
+
+
+        .quick-action-btn.active .quick-plus {
+
+            transform:
+                rotate(45deg);
+
+        }
+
+
+        /* =====================================
+           QUICK MENU
+        ====================================== */
+
+        .quick-menu {
+
+            position: absolute;
+
+            right: 0;
+
+            bottom: 75px;
+
+            width: 190px;
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 8px;
+
+            padding: 10px;
+
+            border-radius: 16px;
+
+            background: white;
+
+            box-shadow:
+                0 15px 40px
+                rgba(0,0,0,.18);
+
+            opacity: 0;
+
+            visibility: hidden;
+
+            transform:
+                translateY(15px)
+                scale(.95);
+
+            transform-origin:
+                bottom right;
+
+            transition:
+                opacity .2s ease,
+                transform .2s ease,
+                visibility .2s ease;
+
+        }
+
+
+        .quick-menu.show {
+
+            opacity: 1;
+
+            visibility: visible;
+
+            transform:
+                translateY(0)
+                scale(1);
+
+        }
+
+
+        .quick-menu a {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            padding:
+                12px 14px;
+
+            border-radius: 11px;
+
+            color: #1e293b;
+
+            text-decoration: none;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+            transition:
+                background .2s ease,
+                transform .2s ease;
+
+        }
+
+
+        .quick-menu a:hover {
+
+            background:
+                #f1f5f9;
+
+            transform:
+                translateX(-3px);
+
+        }
+
+
+        .quick-menu a span:first-child {
+
+            width: 30px;
+            height: 30px;
+
+            border-radius: 9px;
+
+            background:
+                #f1f5f9;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            font-size: 16px;
+
+        }
+
+
+        /* =====================================
+           MOBILE
+        ====================================== */
+
+        @media (max-width: 768px) {
+
+            .sidebar {
+
+                width: 270px;
+
+                transform:
+                    translateX(-100%);
+
+            }
+
+
+            .sidebar.mobile-open {
+
+                transform:
+                    translateX(0);
+
+            }
+
+
+            .sidebar.collapsed {
+
+                width: 270px;
+
+            }
+
+
+            .content,
+            .sidebar.collapsed ~ .content {
+
+                margin-left: 0;
+
+            }
+
+
+            .menu-btn {
+
+                display: flex;
+
+                align-items: center;
+                justify-content: center;
+
+            }
+
+
+            .topbar {
+
+                padding:
+                    0 15px;
+
+            }
+
+
+            .brand-name {
+
+                display: none;
+
+            }
+
+
+            .search-box {
+
+                display: none;
+
+            }
+
+
+            .page {
+
+                padding: 15px;
+
+            }
+
+
+            .quick-action-container {
+
+                right: 18px;
+
+                bottom: 18px;
+
+            }
+
+
+            .quick-action-btn {
+
+                width: 56px;
+                height: 56px;
+
+            }
+
+
+            .quick-menu {
+
+                width: 180px;
+
+                bottom: 68px;
+
+            }
+
+        }
+
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- =========================================
+     MOBILE SIDEBAR OVERLAY
+========================================= -->
+
+<div
+    class="sidebar-overlay"
+    id="sidebarOverlay">
+</div>
+
+
+<!-- =========================================
+     SIDEBAR
+========================================= -->
+
+<aside
+    class="sidebar"
+    id="sidebar"
+>
+
+
+    <!-- =====================================
+         BRAND
+    ====================================== -->
+
+    <div class="sidebar-brand">
+
+    <div class="brand-text">
+        <h2>Kagendo</h2>
+        <span>Farm Manager</span>
+    </div>
+
+    <button
+        type="button"
+        class="sidebar-collapse"
+        id="sidebarCollapse"
+        title="Collapse sidebar"
+    >
+        ‹
+    </button>
+
+</div>
+
+
+    <!-- =====================================
+         NAVIGATION
+    ====================================== -->
+
+    <nav class="sidebar-menu">
+
+
+        <div class="nav-section-title">
+            MAIN
+        </div>
+
+
+        <!-- DASHBOARD -->
+
+        <a
+            href="{{ url_for('dashboard') }}"
+            class="sidebar-link {% if title == 'Dashboard' %}active{% endif %}"
+        >
+
+            <span class="nav-icon">
+                🏠
+            </span>
+
+            <span class="nav-text">
+                Dashboard
+            </span>
+
+        </a>
+
+
+        <!-- =================================
+             FARM MANAGEMENT
+        ================================== -->
+
+        <div class="nav-section-title">
+            FARM MANAGEMENT
+        </div>
+
+
+        <!-- EGGS -->
+
+        <a
+            href="{{ url_for('eggs') }}"
+            class="sidebar-link {% if title == 'Eggs' %}active{% endif %}"
+        >
+
+            <span class="nav-icon">
+                🥚
+            </span>
+
+            <span class="nav-text">
+                Eggs
+            </span>
+
+        </a>
+
+
+        <!-- CHICKS -->
+
+        <a
+            href="{{ url_for('chicks') }}"
+            class="sidebar-link {% if title == 'Chick Management' %}active{% endif %}"
+        >
+
+            <span class="nav-icon">
+                🐥
+            </span>
+
+            <span class="nav-text">
+                Chick Management
+            </span>
+
+        </a>
+
+
+        <!-- FEEDS -->
+
+        <a
+            href="{{ url_for('feeds') }}"
+            class="sidebar-link {% if title == 'Feeds' %}active{% endif %}"
+        >
+
+            <span class="nav-icon">
+                🌾
+            </span>
+
+            <span class="nav-text">
+                Feed
+            </span>
+
+        </a>
+
+
+        <!-- INVENTORY -->
+
+        <a
+            href="{{ url_for('inventory') }}"
+            class="sidebar-link {% if title == 'Inventory' %}active{% endif %}"
+        >
+
+            <span class="nav-icon">
+                📦
+            </span>
+
+            <span class="nav-text">
+                Inventory
+            </span>
+
+        </a>
+
+
+        <!-- =================================
+             FINANCE
+        ================================== -->
+
+        <div class="nav-section-title">
+            FINANCE
+        </div>
+
+
+        <!-- FARM CASH -->
+
+        <a
+            href="{{ url_for('farm_cash') }}"
+            class="sidebar-link {% if title == 'Farm Cash' %}active{% endif %}"
+        >
+
+            <span class="nav-icon">
+                💵
+            </span>
+
+            <span class="nav-text">
+                Farm Cash
+            </span>
+
+        </a>
+
+
+        <!-- CREDIT SALES -->
+
+        <a
+            href="{{ url_for('credit_sales') }}"
+            class="sidebar-link {% if title == 'Credit Sales' %}active{% endif %}"
+        >
+
+            <span class="nav-icon">
+                💳
+            </span>
+
+            <span class="nav-text">
+                Credit Sales
+            </span>
+
+        </a>
+
+
+        <!-- =================================
+             TOOLS
+        ================================== -->
+
+        <div class="nav-section-title">
+            TOOLS
+        </div>
+
+
+        <!-- REMINDERS -->
+
+        <a
+            href="{{ url_for('reminders') }}"
+            class="sidebar-link reminder-link {% if title == 'Reminders' %}active{% endif %}"
+        >
+
+            <span class="nav-icon notification-icon">
+                🔔
+            </span>
+
+            <span class="nav-text">
+                Reminders
+            </span>
+
+            <span
+                class="nav-badge"
+                id="reminderBadge"
+            >
+                !
+            </span>
+
+        </a>
+
+
+        <!-- FARM SETTINGS -->
+
+        <a
+            href="{{ url_for('farm_settings') }}"
+            class="sidebar-link {% if title == 'Farm Settings' %}active{% endif %}"
+        >
+
+            <span class="nav-icon">
+                ⚙️
+            </span>
+
+            <span class="nav-text">
+                Farm Settings
+            </span>
+
+        </a>
+
+    </nav>
+
+
+    <!-- =====================================
+         FARM STATUS
+    ====================================== -->
+
+    <div class="sidebar-bottom">
+
+        <div class="farm-status-card">
+
+            <div class="status-icon">
+                🐔
+            </div>
+
+            <div class="status-info">
+
+                <strong>
+                    Farm Status
+                </strong>
+
+                <span>
+                    ● Active
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="sidebar-version">
+            Kagendo Farm Manager
+        </div>
+
+    </div>
+
+</aside>
+
+
+<!-- =========================================
+     MAIN CONTENT
+========================================= -->
+
+<div
+    class="content"
+    id="content"
+>
+
+
+    <!-- =====================================
+         TOP BAR
+    ====================================== -->
+
+    <header class="topbar">
+
+
+        <!-- LEFT -->
+
+       <div class="top-left">
+
+    <button
+        class="menu-btn"
+        id="menuBtn"
+        type="button"
+        aria-label="Toggle navigation"
+        aria-expanded="false"
+    >
+        ☰
+    </button>
+
+</div>
+
+
+        <!-- RIGHT -->
+
+        <div class="top-actions">
+
+
+            <!-- SEARCH -->
+
+            <div class="search-box">
+
+                <input
+                    type="text"
+                    placeholder="Search..."
+                    id="globalSearch"
+                >
+
+            </div>
+
+
+            <!-- NOTIFICATIONS -->
+
+            <div class="notification-container">
+
+                <button
+                    id="notification-btn"
+                    class="notification-btn"
+                    type="button"
+                    aria-label="Notifications"
+                >
+
+                    🔔
+
+                    <span id="notification-count">
+                        {{ notification_count|default(0) }}
+                    </span>
+
+                </button>
+
+
+                <div
+                    id="notification-dropdown"
+                    class="notification-dropdown"
+                >
+
+                    {% if notifications %}
+
+                        {% for note in notifications %}
+
+                            <div class="notification-item">
+                                {{ note }}
+                            </div>
+
+                        {% endfor %}
+
+                    {% else %}
+
+                        <div class="notification-item">
+                            No notifications 🎉
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+            <!-- PROFILE -->
+
+            <button
+                class="profile-btn"
+                title="Profile"
+                type="button"
+            >
+                👤
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- =====================================
+         PAGE CONTENT
+    ====================================== -->
+
+    <main class="page">
+
+        {% block content %}
+
+            {{ body|safe }}
+
+        {% endblock %}
+
+    </main>
+
+</div>
+
+
+<!-- =========================================
+     FLOATING ACTION BUTTON
+========================================= -->
+
+<div
+    class="quick-action-container"
+    id="quickActionContainer"
+>
+
+
+    <!-- QUICK MENU -->
+
+    <div
+        class="quick-menu"
+        id="quickMenu"
+    >
+
+        <a href="{{ url_for('eggs') }}">
+
+            <span>
+                🥚
+            </span>
+
+            <span>
+                Record Eggs
+            </span>
+
+        </a>
+
+
+        <a href="{{ url_for('feeds') }}">
+
+            <span>
+                🌾
+            </span>
+
+            <span>
+                Add Feed
+            </span>
+
+        </a>
+
+
+        <a href="{{ url_for('sales') }}">
+
+            <span>
+                💰
+            </span>
+
+            <span>
+                Record Sale
+            </span>
+
+        </a>
+
+
+        <a href="{{ url_for('farm_cash') }}">
+
+            <span>
+                💵
+            </span>
+
+            <span>
+                Farm Cash
+            </span>
+
+        </a>
+
+    </div>
+
+
+    <!-- FAB -->
+
+    <button
+        class="quick-action-btn"
+        id="quickActionBtn"
+        type="button"
+        aria-label="Quick actions"
+        aria-expanded="false"
+    >
+
+        <span class="quick-plus">
+            +
+        </span>
+
+    </button>
+
+</div>
+
+
+<!-- =========================================
+     JAVASCRIPT
+========================================= -->
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+
+        /* =====================================
+           ELEMENTS
+        ====================================== */
+
+        const sidebar =
+            document.getElementById("sidebar");
+
+        const menuBtn =
+            document.getElementById("menuBtn");
+
+        const sidebarOverlay =
+            document.getElementById(
+                "sidebarOverlay"
+            );
+
+        const collapseButton =
+            document.getElementById(
+                "sidebarCollapse"
+            );
+
+        const notificationBtn =
+            document.getElementById(
+                "notification-btn"
+            );
+
+        const notificationDropdown =
+            document.getElementById(
+                "notification-dropdown"
+            );
+
+        const quickActionBtn =
+            document.getElementById(
+                "quickActionBtn"
+            );
+
+        const quickMenu =
+            document.getElementById(
+                "quickMenu"
+            );
+
+        const searchInput =
+            document.getElementById(
+                "globalSearch"
+            );
+
+
+        /* =====================================
+           SIDEBAR
+        ====================================== */
+
+        function openSidebar() {
+
+            if (!sidebar) {
+                return;
+            }
+
+            sidebar.classList.add(
+                "mobile-open"
+            );
+
+            if (sidebarOverlay) {
+
+                sidebarOverlay.classList.add(
+                    "show"
+                );
+
+            }
+
+            if (menuBtn) {
+
+                menuBtn.setAttribute(
+                    "aria-expanded",
+                    "true"
+                );
+
+            }
+
+        }
+
+
+        function closeSidebar() {
+
+            if (!sidebar) {
+                return;
+            }
+
+            sidebar.classList.remove(
+                "mobile-open"
+            );
+
+            if (sidebarOverlay) {
+
+                sidebarOverlay.classList.remove(
+                    "show"
+                );
+
+            }
+
+            if (menuBtn) {
+
+                menuBtn.setAttribute(
+                    "aria-expanded",
+                    "false"
+                );
+
+            }
+
+        }
+
+
+        if (menuBtn) {
+
+            menuBtn.addEventListener(
+                "click",
+                function (event) {
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+                    if (
+                        sidebar &&
+                        sidebar.classList.contains(
+                            "mobile-open"
+                        )
+                    ) {
+
+                        closeSidebar();
+
+                    } else {
+
+                        openSidebar();
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        if (sidebarOverlay) {
+
+            sidebarOverlay.addEventListener(
+                "click",
+                function () {
+
+                    closeSidebar();
+
+                }
+            );
+
+        }
+
+
+        /* =====================================
+           SIDEBAR COLLAPSE
+        ====================================== */
+
+        if (collapseButton) {
+
+            collapseButton.addEventListener(
+                "click",
+                function (event) {
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+                    if (!sidebar) {
+                        return;
+                    }
+
+                    sidebar.classList.toggle(
+                        "collapsed"
+                    );
+
+                    localStorage.setItem(
+                        "kagendoSidebarCollapsed",
+                        sidebar.classList.contains(
+                            "collapsed"
+                        )
+                    );
+
+                }
+            );
+
+        }
+
+
+        /* =====================================
+           RESTORE SIDEBAR STATE
+        ====================================== */
+
+        if (
+            sidebar &&
+            window.innerWidth > 768 &&
+            localStorage.getItem(
+                "kagendoSidebarCollapsed"
+            ) === "true"
+        ) {
+
+            sidebar.classList.add(
+                "collapsed"
+            );
+
+        }
+
+
+        /* =====================================
+           CLOSE MOBILE SIDEBAR AFTER NAVIGATION
+        ====================================== */
+
+        if (sidebar) {
+
+            const links =
+                sidebar.querySelectorAll(
+                    ".sidebar-menu a"
+                );
+
+            links.forEach(
+                function (link) {
+
+                    link.addEventListener(
+                        "click",
+                        function () {
+
+                            closeSidebar();
+
+                        }
+                    );
+
+                }
+            );
+
+        }
+
+
+        /* =====================================
+           NOTIFICATIONS
+        ====================================== */
+
+        function closeNotifications() {
+
+            if (notificationDropdown) {
+
+                notificationDropdown.classList.remove(
+                    "show"
+                );
+
+            }
+
+        }
+
+
+        if (notificationBtn) {
+
+            notificationBtn.addEventListener(
+                "click",
+                function (event) {
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+
+                    if (!notificationDropdown) {
+                        return;
+                    }
+
+
+                    notificationDropdown.classList.toggle(
+                        "show"
+                    );
+
+
+                    /* Close FAB */
+
+                    closeQuickMenu();
+
+                }
+            );
+
+        }
+
+
+        if (notificationDropdown) {
+
+            notificationDropdown.addEventListener(
+                "click",
+                function (event) {
+
+                    event.stopPropagation();
+
+                }
+            );
+
+        }
+
+
+        /* =====================================
+           QUICK ACTION MENU
+        ====================================== */
+
+        function openQuickMenu() {
+
+            if (
+                !quickActionBtn ||
+                !quickMenu
+            ) {
+
+                return;
+
+            }
+
+
+            quickMenu.classList.add(
+                "show"
+            );
+
+            quickActionBtn.classList.add(
+                "active"
+            );
+
+            quickActionBtn.setAttribute(
+                "aria-expanded",
+                "true"
+            );
+
+        }
+
+
+        function closeQuickMenu() {
+
+            if (
+                !quickActionBtn ||
+                !quickMenu
+            ) {
+
+                return;
+
+            }
+
+
+            quickMenu.classList.remove(
+                "show"
+            );
+
+            quickActionBtn.classList.remove(
+                "active"
+            );
+
+            quickActionBtn.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+
+        }
+
+
+        function toggleQuickMenu(event) {
+
+            if (event) {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+            }
+
+
+            if (
+                !quickActionBtn ||
+                !quickMenu
+            ) {
+
+                return;
+
+            }
+
+
+            if (
+                quickMenu.classList.contains(
+                    "show"
+                )
+            ) {
+
+                closeQuickMenu();
+
+            } else {
+
+                openQuickMenu();
+
+                closeNotifications();
+
+            }
+
+        }
+
+
+        if (quickActionBtn) {
+
+            quickActionBtn.addEventListener(
+                "click",
+                toggleQuickMenu
+            );
+
+        }
+
+
+        if (quickMenu) {
+
+            quickMenu.addEventListener(
+                "click",
+                function (event) {
+
+                    event.stopPropagation();
+
+                }
+            );
+
+        }
+
+
+        /* =====================================
+           GLOBAL CLICK
+        ====================================== */
+
+        document.addEventListener(
+            "click",
+            function (event) {
+
+
+                /* Notifications */
+
+                if (
+                    notificationBtn &&
+                    notificationDropdown &&
+                    !notificationBtn.contains(
+                        event.target
+                    ) &&
+                    !notificationDropdown.contains(
+                        event.target
+                    )
+                ) {
+
+                    closeNotifications();
+
+                }
+
+
+                /* Quick menu */
+
+                if (
+                    quickActionBtn &&
+                    quickMenu &&
+                    !quickActionBtn.contains(
+                        event.target
+                    ) &&
+                    !quickMenu.contains(
+                        event.target
+                    )
+                ) {
+
+                    closeQuickMenu();
+
+                }
+
+            }
+        );
+
+
+        /* =====================================
+           SEARCH
+        ====================================== */
+
+        if (searchInput) {
+
+            searchInput.addEventListener(
+                "input",
+                function () {
+
+                    const searchText =
+                        this.value
+                            .toLowerCase()
+                            .trim();
+
+
+                    const cards =
+                        document.querySelectorAll(
+                            ".dashboard-card, " +
+                            ".summary-card, " +
+                            ".summary-box"
+                        );
+
+
+                    cards.forEach(
+                        function (card) {
+
+                            const text =
+                                card.innerText
+                                    .toLowerCase();
+
+
+                            if (
+                                searchText === "" ||
+                                text.includes(
+                                    searchText
+                                )
+                            ) {
+
+                                card.style.display =
+                                    "";
+
+                            } else {
+
+                                card.style.display =
+                                    "none";
+
+                            }
+
+                        }
+                    );
+
+                }
+            );
+
+        }
+
+
+        /* =====================================
+           ESCAPE KEY
+        ====================================== */
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (
+                    event.key === "Escape"
+                ) {
+
+                    closeSidebar();
+
+                    closeQuickMenu();
+
+                    closeNotifications();
+
+                }
+
+            }
+        );
+
+
+        /* =====================================
+           WINDOW RESIZE
+        ====================================== */
+
+        window.addEventListener(
+            "resize",
+            function () {
+
+                if (
+                    window.innerWidth > 768
+                ) {
+
+                    closeSidebar();
+
+                }
+
+            }
+        );
+
+
+    }
+);
+
+</script>
+
+
+{% block scripts %}{% endblock %}
+
+
+</body>
+
+</html>
