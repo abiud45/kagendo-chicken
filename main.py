@@ -2160,21 +2160,37 @@ def add_chick():
 
 @app.route("/delete_chick/<int:id>", methods=["POST"])
 def delete_chick(id):
+
+    print("========== DELETE CHICK ==========")
+    print("REQUEST METHOD:", request.method)
+    print("CHICK ID:", id)
+
     chick = ChickBatch.query.get_or_404(id)
 
     try:
         db.session.delete(chick)
+
+        print("MARKED FOR DELETE:", chick)
+
         db.session.commit()
 
-        flash("Chick batch deleted successfully.", "success")
-
-    except Exception as e:
-        db.session.rollback()
-
-        print("DELETE CHICK ERROR:", e)
+        print("DELETE COMMITTED SUCCESSFULLY")
 
         flash(
-            "Unable to delete this chick batch.",
+            f"Chick batch {chick.batch_number} deleted successfully.",
+            "success"
+        )
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        print("========== DELETE ERROR ==========")
+        print(repr(e))
+        print("=================================")
+
+        flash(
+            f"Delete failed: {str(e)}",
             "danger"
         )
 
