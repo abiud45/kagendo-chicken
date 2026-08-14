@@ -1,0 +1,141 @@
+<section class="section">
+
+    <div class="section-title">
+        <h2>{{ "Edit Sale" if edit_record else "Add Sale" }}</h2>
+
+        {% if edit_record %}
+        <a class="button back" href="{{ url_for('sales') }}">
+            Cancel
+        </a>
+        {% endif %}
+    </div>
+
+    <form method="post">
+
+        {% if edit_record %}
+        <input type="hidden" name="id" value="{{ edit_record.id }}">
+        {% endif %}
+
+        <label>
+            Eggs Sold
+            <input
+                name="quantity"
+                type="number"
+                min="0"
+                required
+                value="{{ edit_record.quantity if edit_record else '' }}">
+        </label>
+
+        <label>
+            Price Each (KES)
+            <input
+                name="price"
+                type="number"
+                min="0"
+                step="0.01"
+                required
+                value="{{ edit_record.price if edit_record else '' }}">
+        </label>
+
+        <label>
+
+            <input
+                type="checkbox"
+                id="on_credit"
+                name="on_credit">
+
+    Sold on Credit
+
+       </label>
+
+<div id="customerBox" style="display:none;">
+
+       <label>
+
+        Customer Name
+
+        <input
+            type="text"
+            name="customer"
+            id="customer">
+
+    </label>
+
+</div>
+
+
+        <label>
+            Date
+            <input
+                name="record_date"
+                type="date"
+                required
+                value="{{ edit_record.record_date if edit_record else today }}">
+        </label>
+
+        <button class="save">
+            {{ "Update Sale" if edit_record else "Add Sale" }}
+        </button>
+
+    </form>
+
+</section>
+
+
+<section class="section">
+
+    <div class="section-title">
+        <h2>Sales Records</h2>
+    </div>
+
+    <div class="list">
+
+        {% for r in rows %}
+
+        <article class="row">
+
+            <div>
+
+                <strong>
+                    {{ r.quantity }} eggs × KES {{ "%.2f"|format(r.price) }}
+                </strong>
+
+                <small>
+                    {{ r.record_date }} — Total KES {{ "%.2f"|format(r.total) }}
+                </small>
+
+            </div>
+
+            <div class="actions">
+
+                <a
+                    class="button edit"
+                    href="{{ url_for('sales', edit=r.id) }}">
+                    Edit
+                </a>
+
+                <form
+                    method="post"
+                    action="{{ url_for('delete_sale', id=r.id) }}">
+
+                    <button type="submit" class="delete">
+                        Del
+                    </button>
+
+                </form>
+
+            </div>
+
+        </article>
+
+        {% else %}
+
+        <p class="empty">
+            No sales records yet.
+        </p>
+
+        {% endfor %}
+
+    </div>
+
+</section>
