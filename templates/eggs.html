@@ -1,0 +1,1029 @@
+<div class="page-container eggs-page">
+
+    <!-- =========================================
+         HEADER
+    ========================================== -->
+
+    <div class="page-header">
+
+        <h2>🥚 Eggs Management</h2>
+
+        <p>
+            Manage egg collection, adjustments and sales
+        </p>
+
+    </div>
+
+
+    <!-- =========================================
+         SUMMARY CARDS
+    ========================================== -->
+
+    <section class="egg-summary">
+
+        <div class="egg-card total">
+            <h4>Total Eggs</h4>
+            <h1>{{ total_eggs }}</h1>
+            <p>Collected from farm</p>
+        </div>
+
+        <div class="egg-card available">
+            <h4>Available Eggs</h4>
+            <h1>{{ available_eggs }}</h1>
+            <p>Current stock</p>
+        </div>
+
+        <div class="egg-card consumed">
+            <h4>Eggs Used</h4>
+            <h1>{{ adjusted_eggs }}</h1>
+            <p>Broken / eaten / removed</p>
+        </div>
+
+        <div class="egg-card production">
+            <h4>Records</h4>
+            <h1>{{ rows|length }}</h1>
+            <p>Collection entries</p>
+        </div>
+
+        <div class="egg-card weekly-loss">
+            <h4>This Week Usage</h4>
+            <h1>{{ weekly_adjustments }}</h1>
+            <p>Eggs removed in 7 days</p>
+        </div>
+
+    </section>
+
+
+    <!-- =========================================
+         MANAGEMENT TABS
+    ========================================== -->
+
+    <div
+        class="egg-tabs"
+        role="tablist"
+        aria-label="Egg management"
+    >
+
+        <button
+            type="button"
+            class="egg-tab active"
+            data-tab="collection"
+            role="tab"
+            aria-selected="true"
+        >
+            <span class="egg-tab-icon">🥚</span>
+            Collection
+        </button>
+
+
+        <button
+            type="button"
+            class="egg-tab"
+            data-tab="adjustments"
+            role="tab"
+            aria-selected="false"
+        >
+            <span class="egg-tab-icon">➖</span>
+            Adjustments
+        </button>
+
+
+        <button
+            type="button"
+            class="egg-tab"
+            data-tab="sales"
+            role="tab"
+            aria-selected="false"
+        >
+            <span class="egg-tab-icon">💰</span>
+            Egg Sales
+        </button>
+
+
+        <button
+            type="button"
+            class="egg-tab"
+            data-tab="crate-sales"
+            role="tab"
+            aria-selected="false"
+        >
+            <span class="egg-tab-icon">📦</span>
+            Crate Sales
+        </button>
+
+    </div>
+
+
+    <!-- =========================================
+         1. EGG COLLECTION
+    ========================================== -->
+
+    <section
+        id="collection"
+        class="egg-section active"
+    >
+
+        <section class="section">
+
+            <div class="section-title">
+
+                <div>
+                    <h2>
+                        {{ "Edit Egg Collection" if edit_record else "Add Egg Collection" }}
+                    </h2>
+
+                    <p>
+                        Record eggs collected from chickens.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <form method="POST">
+
+                <input
+                    type="hidden"
+                    name="form_type"
+                    value="collection"
+                >
+
+                {% if edit_record %}
+
+                    <input
+                        type="hidden"
+                        name="id"
+                        value="{{ edit_record.id }}"
+                    >
+
+                {% endif %}
+
+
+                <label>
+                    Quantity
+
+                    <input
+                        type="number"
+                        name="quantity"
+                        min="1"
+                        required
+                        value="{{ edit_record.quantity if edit_record else '' }}"
+                    >
+
+                </label>
+
+
+                <label>
+                    Date
+
+                    <input
+                        type="date"
+                        name="record_date"
+                        required
+                        value="{{ edit_record.record_date.isoformat() if edit_record else today }}"
+                    >
+
+                </label>
+
+
+                <button
+                    type="submit"
+                    class="save"
+                >
+                    🥚
+                    {{ "Update Collection" if edit_record else "Save Collection" }}
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <!-- COLLECTION HISTORY -->
+
+        <section class="section">
+
+            <div class="section-title">
+
+                <h2>
+                    🥚 Egg Collection History
+                </h2>
+
+                <span class="record-count">
+                    {{ rows|length }} Records
+                </span>
+
+            </div>
+
+
+            {% if rows %}
+
+                <div class="history-grid">
+
+                    {% for r in rows %}
+
+                        <div class="egg-history-card collection-card">
+
+                            <div class="history-title">
+
+                                <h2>
+                                    {{ r.quantity }} Eggs
+                                </h2>
+
+                                <span>
+                                    {{ r.record_date }}
+                                </span>
+
+                            </div>
+
+
+                            <div class="history-info">
+
+                                <p>
+                                    Daily collection
+                                </p>
+
+                            </div>
+
+
+                            <div class="history-actions">
+
+                                <a
+                                    class="edit-btn"
+                                    href="{{ url_for('eggs', edit=r.id) }}"
+                                >
+                                    Edit
+                                </a>
+
+
+                                <form
+                                    method="POST"
+                                    action="{{ url_for('delete_egg', id=r.id) }}"
+                                >
+
+                                    <button
+                                        type="submit"
+                                        class="delete-btn"
+                                        onclick="return confirm('Delete this record?')"
+                                    >
+                                        Delete
+                                    </button>
+
+                                </form>
+
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-card">
+
+                    <h3>
+                        No Egg Records
+                    </h3>
+
+                    <p>
+                        Start recording egg production.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+    </section>
+
+
+    <!-- =========================================
+         2. EGG ADJUSTMENTS
+    ========================================== -->
+
+    <section
+        id="adjustments"
+        class="egg-section"
+    >
+
+        <section class="section">
+
+            <div class="section-title">
+
+                <div>
+
+                    <h2>
+                        ➖ Egg Adjustment
+                    </h2>
+
+                    <p>
+                        Record eggs eaten, broken, donated or removed.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <form method="POST">
+
+                <input
+                    type="hidden"
+                    name="form_type"
+                    value="adjustment"
+                >
+
+
+                <label>
+                    Quantity
+
+                    <input
+                        type="number"
+                        name="quantity"
+                        min="1"
+                        required
+                    >
+
+                </label>
+
+
+                <label>
+                    Reason
+
+                    <select
+                        name="reason"
+                        required
+                    >
+
+                        <option value="">
+                            Select reason
+                        </option>
+
+                        <option value="Home Consumption">
+                            🍳 Home Consumption
+                        </option>
+
+                        <option value="Broken Eggs">
+                            💥 Broken Eggs
+                        </option>
+
+                        <option value="Hatching">
+                            🐣 Hatching
+                        </option>
+
+                        <option value="Donation">
+                            🎁 Donation
+                        </option>
+
+                        <option value="Spoiled Eggs">
+                            ⚠️ Spoiled Eggs
+                        </option>
+
+                        <option value="Other">
+                            📦 Other
+                        </option>
+
+                    </select>
+
+                </label>
+
+
+                <label>
+                    Notes
+
+                    <textarea
+                        name="notes"
+                        rows="3"
+                        placeholder="Optional notes..."
+                    ></textarea>
+
+                </label>
+
+
+                <button
+                    type="submit"
+                    class="save"
+                >
+                    ➖ Record Adjustment
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <!-- ADJUSTMENT HISTORY -->
+
+        <section class="section">
+
+            <div class="section-title">
+
+                <h2>
+                    ➖ Egg Adjustment History
+                </h2>
+
+                <span class="record-count">
+                    {{ adjustments|length }} Records
+                </span>
+
+            </div>
+
+
+            {% if adjustments %}
+
+                <div class="history-grid">
+
+                    {% for a in adjustments %}
+
+                        <div
+                            class="egg-history-card adjustment-card
+                            {% if a.reason == 'Broken Eggs' %}
+                                broken-card
+                            {% elif a.reason == 'Home Consumption' %}
+                                consumption-card
+                            {% elif a.reason == 'Donation' %}
+                                donation-card
+                            {% elif a.reason == 'Spoiled Eggs' %}
+                                spoiled-card
+                            {% else %}
+                                other-card
+                            {% endif %}"
+                        >
+
+                            <div class="adjustment-top">
+
+                                <div>
+
+                                    <h2>
+                                        {{ a.icon }} {{ a.quantity }}
+                                    </h2>
+
+                                    <span>
+                                        eggs removed
+                                    </span>
+
+                                </div>
+
+
+                                <div class="adjustment-date">
+                                    {{ a.record_date }}
+                                </div>
+
+                            </div>
+
+
+                            <div class="adjustment-body">
+
+                                <h3>
+                                    {{ a.reason }}
+                                </h3>
+
+
+                                {% if a.notes %}
+
+                                    <p>
+                                        {{ a.notes }}
+                                    </p>
+
+                                {% else %}
+
+                                    <p>
+                                        No notes added
+                                    </p>
+
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-card">
+
+                    <h3>
+                        No Egg Adjustments
+                    </h3>
+
+                    <p>
+                        Broken, eaten and removed eggs will appear here.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+    </section>
+
+
+    <!-- =========================================
+         3. EGG SALES
+    ========================================== -->
+
+    <section
+        id="sales"
+        class="egg-section"
+    >
+
+        <section class="section">
+
+            <div class="section-title">
+
+                <h2>
+                    {{ "Edit Sale" if edit_record else "Add Egg Sale" }}
+                </h2>
+
+
+                {% if edit_record %}
+
+                    <a
+                        class="button back"
+                        href="{{ url_for('sales') }}"
+                    >
+                        Cancel
+                    </a>
+
+                {% endif %}
+
+            </div>
+
+
+            <form method="POST">
+
+                {% if edit_record %}
+
+                    <input
+                        type="hidden"
+                        name="id"
+                        value="{{ edit_record.id }}"
+                    >
+
+                {% endif %}
+
+
+                <label>
+                    Eggs Sold
+
+                    <input
+                        name="quantity"
+                        type="number"
+                        min="1"
+                        required
+                        value="{{ edit_record.quantity if edit_record else '' }}"
+                    >
+
+                </label>
+
+
+                <label>
+                    Price Each (KES)
+
+                    <input
+                        name="price"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        required
+                        value="{{ edit_record.price if edit_record else '' }}"
+                    >
+
+                </label>
+
+
+                <label class="checkbox-label">
+
+                    <input
+                        type="checkbox"
+                        id="on_credit"
+                        name="on_credit"
+                    >
+
+                    Sold on Credit
+
+                </label>
+
+
+                <div
+                    id="customerBox"
+                    style="display:none;"
+                >
+
+                    <label>
+                        Customer Name
+
+                        <input
+                            type="text"
+                            name="customer"
+                            id="customer"
+                        >
+
+                    </label>
+
+                </div>
+
+
+                <label>
+                    Date
+
+                    <input
+                        name="record_date"
+                        type="date"
+                        required
+                        value="{{ edit_record.record_date if edit_record else today }}"
+                    >
+
+                </label>
+
+
+                <button
+                    type="submit"
+                    class="save"
+                >
+                    💰
+                    {{ "Update Sale" if edit_record else "Add Sale" }}
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <!-- SALES HISTORY -->
+
+        <section class="section">
+
+            <div class="section-title">
+
+                <h2>
+                    💰 Sales Records
+                </h2>
+
+            </div>
+
+
+            <div class="list">
+
+                {% for r in rows %}
+
+                    <article class="row">
+
+                        <div>
+
+                            <strong>
+                                {{ r.quantity }}
+                                eggs ×
+                                KES {{ "%.2f"|format(r.price) }}
+                            </strong>
+
+                            <small>
+                                {{ r.record_date }}
+                                —
+                                Total KES {{ "%.2f"|format(r.total) }}
+                            </small>
+
+                        </div>
+
+
+                        <div class="actions">
+
+                            <a
+                                class="button edit"
+                                href="{{ url_for('sales', edit=r.id) }}"
+                            >
+                                Edit
+                            </a>
+
+
+                            <form
+                                method="POST"
+                                action="{{ url_for('delete_sale', id=r.id) }}"
+                            >
+
+                                <button
+                                    type="submit"
+                                    class="delete"
+                                    onclick="return confirm('Delete this sale?')"
+                                >
+                                    Del
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    </article>
+
+                {% else %}
+
+                    <p class="empty">
+                        No sales records yet.
+                    </p>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+    </section>
+
+
+    <!-- =========================================
+         4. CRATE SALES
+    ========================================== -->
+
+    <section
+        id="crate-sales"
+        class="egg-section"
+    >
+
+        <section class="section">
+
+            <div class="section-title">
+
+                <h2>
+                    {{ "Edit Crate Sale" if edit_record else "Sell Crates" }}
+                </h2>
+
+
+                {% if edit_record %}
+
+                    <a
+                        class="button back"
+                        href="{{ url_for('crate_sales') }}"
+                    >
+                        Cancel
+                    </a>
+
+                {% endif %}
+
+            </div>
+
+
+            <form method="POST">
+
+                {% if edit_record %}
+
+                    <input
+                        type="hidden"
+                        name="id"
+                        value="{{ edit_record.id }}"
+                    >
+
+                {% endif %}
+
+
+                <label>
+                    Number of Crates
+
+                    <input
+                        name="crates"
+                        type="number"
+                        min="1"
+                        required
+                        value="{{ edit_record.crates if edit_record else '' }}"
+                    >
+
+                </label>
+
+
+                <label>
+                    Price Per Crate
+
+                    <input
+                        name="price_per_crate"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        required
+                        value="{{ edit_record.price_per_crate if edit_record else '' }}"
+                    >
+
+                </label>
+
+
+                <button
+                    type="submit"
+                    class="save"
+                >
+                    📦
+                    {{ "Update Sale" if edit_record else "Save Sale" }}
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <!-- CRATE SALES HISTORY -->
+
+        <section class="section">
+
+            <div class="section-title">
+
+                <h2>
+                    📦 Crate Sales Records
+                </h2>
+
+            </div>
+
+
+            <div class="list">
+
+                {% for r in rows %}
+
+                    <div class="row">
+
+                        <div>
+
+                            <strong>
+                                {{ r.crates }} Crates
+                            </strong>
+
+                            <small>
+                                {{ r.sale_date }}
+                                |
+                                {{ r.crates * 30 }} Eggs
+                                |
+                                KES {{ "%.2f"|format(r.total) }}
+                            </small>
+
+                        </div>
+
+
+                        <div class="actions">
+
+                            <a
+                                class="button edit"
+                                href="{{ url_for('crate_sales', edit=r.id) }}"
+                            >
+                                Edit
+                            </a>
+
+
+                            <form
+                                method="POST"
+                                action="{{ url_for('delete_crate_sale', id=r.id) }}"
+                            >
+
+                                <button
+                                    type="submit"
+                                    class="delete"
+                                    onclick="return confirm('Delete this crate sale?')"
+                                >
+                                    Del
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    </div>
+
+                {% else %}
+
+                    <p class="empty">
+                        No crate sales records yet.
+                    </p>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+    </section>
+
+</div>
+
+
+<!-- =========================================
+     EGG TAB JAVASCRIPT
+========================================= -->
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const tabs =
+        document.querySelectorAll(".egg-tab");
+
+    const sections =
+        document.querySelectorAll(".egg-section");
+
+
+    tabs.forEach(function (tab) {
+
+        tab.addEventListener("click", function () {
+
+            const target =
+                this.getAttribute("data-tab");
+
+
+            /* Remove active state */
+
+            tabs.forEach(function (item) {
+
+                item.classList.remove("active");
+
+                item.setAttribute(
+                    "aria-selected",
+                    "false"
+                );
+
+            });
+
+
+            sections.forEach(function (section) {
+
+                section.classList.remove("active");
+
+            });
+
+
+            /* Activate clicked tab */
+
+            this.classList.add("active");
+
+            this.setAttribute(
+                "aria-selected",
+                "true"
+            );
+
+
+            const targetSection =
+                document.getElementById(target);
+
+
+            if (targetSection) {
+
+                targetSection.classList.add("active");
+
+            }
+
+        });
+
+    });
+
+
+    /* =====================================
+       CREDIT SALE CUSTOMER FIELD
+    ====================================== */
+
+    const creditCheckbox =
+        document.getElementById("on_credit");
+
+    const customerBox =
+        document.getElementById("customerBox");
+
+    const customerInput =
+        document.getElementById("customer");
+
+
+    if (
+        creditCheckbox &&
+        customerBox
+    ) {
+
+        creditCheckbox.addEventListener(
+            "change",
+            function () {
+
+                if (this.checked) {
+
+                    customerBox.style.display =
+                        "block";
+
+                    if (customerInput) {
+                        customerInput.required = true;
+                    }
+
+                } else {
+
+                    customerBox.style.display =
+                        "none";
+
+                    if (customerInput) {
+                        customerInput.required = false;
+                        customerInput.value = "";
+                    }
+
+                }
+
+            }
+        );
+
+    }
+
+});
+
+</script>
