@@ -2169,9 +2169,6 @@ def delete_chick(id):
 
     try:
         db.session.delete(chick)
-
-        print("MARKED FOR DELETE:", chick)
-
         db.session.commit()
 
         print("DELETE COMMITTED SUCCESSFULLY")
