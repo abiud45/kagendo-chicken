@@ -1,0 +1,94 @@
+<div class="page-header">
+
+    <h2>🔔 Farm Reminders</h2>
+
+    <a href="{{ url_for('add_reminder') }}" class="btn btn-primary">
+        + Add Reminder
+    </a>
+
+</div>
+
+<div class="card-list">
+
+{% for r in rows %}
+
+<div class="card">
+
+    <div class="card-header">
+
+        <h3>{{ r.title }}</h3>
+
+        {% if r.enabled %}
+            <span class="badge success">Enabled</span>
+        {% else %}
+            <span class="badge danger">Disabled</span>
+        {% endif %}
+
+    </div>
+
+    <p>{{ r.description }}</p>
+
+    <p>
+        📅 {{ r.reminder_date }}
+    </p>
+
+    <p>
+        🕒 {{ r.reminder_time.strftime('%H:%M') }}
+    </p>
+
+    <p>
+        🔁 {{ r.repeat }}
+    </p>
+
+    <div class="actions">
+
+        <a
+        href="{{ url_for('edit_reminder', id=r.id) }}"
+        class="btn btn-warning">
+            Edit
+        </a>
+
+        <a
+        href="{{ url_for('toggle_reminder', id=r.id) }}"
+        class="btn btn-info">
+
+            {% if r.enabled %}
+                Disable
+            {% else %}
+                Enable
+            {% endif %}
+<form
+    method="POST"
+    action="{{ url_for('delete_reminder', id=reminder.id) }}"
+    onsubmit="return confirm('Delete this reminder?');"
+>
+
+    <button
+        type="submit"
+        class="delete-btn"
+    >
+        🗑️ Delete
+    </button>
+
+</form>
+
+    </div>
+
+</div>
+
+{% else %}
+
+<div class="card">
+
+    <h3>No reminders yet</h3>
+
+    <p>
+        Click <b>Add Reminder</b> to create your first reminder.
+    </p>
+
+</div>
+
+{% endfor %}
+
+</div>
+
