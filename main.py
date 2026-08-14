@@ -1512,28 +1512,57 @@ def inventory():
 
 @app.route("/chicks")
 def chicks():
-    search = request.args.get("search", "")
-    status = request.args.get("status", "")
+
+    search = request.args.get("search", "").strip()
+    status = request.args.get("status", "").strip()
+
+    # ---------------------------------------------------------
+    # BASE QUERY
+    # ---------------------------------------------------------
 
     query = ChickBatch.query
 
+
+    # ---------------------------------------------------------
+    # SEARCH
+    # ---------------------------------------------------------
+
     if search:
+
+        search_term = f"%{search}%"
+
         query = query.filter(
             db.or_(
-                ChickBatch.batch_number.contains(search),
-                ChickBatch.breed.contains(search),
-                ChickBatch.supplier.contains(search)
+                ChickBatch.batch_number.ilike(search_term),
+                ChickBatch.breed.ilike(search_term),
+                ChickBatch.supplier.ilike(search_term)
             )
         )
 
+
+    # ---------------------------------------------------------
+    # STATUS FILTER
+    # ---------------------------------------------------------
+
     if status:
+
         query = query.filter(
             ChickBatch.status == status
         )
 
+
+    # ---------------------------------------------------------
+    # GET BATCHES
+    # ---------------------------------------------------------
+
     batches = query.order_by(
         ChickBatch.purchase_date.desc()
     ).all()
+
+
+    # ---------------------------------------------------------
+    # CALCULATE BATCH FEED INFORMATION
+    # ---------------------------------------------------------
 
     for b in batches:
 
@@ -1547,6 +1576,10 @@ def chicks():
             for r in b.feed_records
         )
 
+
+    # ---------------------------------------------------------
+    # FARM TOTALS
+    # ---------------------------------------------------------
 
     total = sum(
         x.quantity or 0
@@ -1565,15 +1598,33 @@ def chicks():
 
     alive = total - dead - sold
 
+
+    # ---------------------------------------------------------
+    # PREVENT NEGATIVE ALIVE COUNT
+    # ---------------------------------------------------------
+
+    alive = max(alive, 0)
+
+
+    # ---------------------------------------------------------
+    # RENDER
+    # ---------------------------------------------------------
+
     return page(
         "Chick Management",
         "chicks.html",
+
         batches=batches,
+
         total=total,
         alive=alive,
         dead=dead,
         sold=sold,
+
         today=date.today(),
+
+        search=search,
+        status=status,
     )
 
 @app.route("/chick-details/<int:id>")
@@ -2158,23 +2209,28 @@ def add_chick():
     return page("Add Chick Batch", body)
 
 
+# =========================================================
+# DELETE ROUTES
+# =========================================================
+
+
 @app.route("/delete_chick/<int:id>", methods=["POST"])
 def delete_chick(id):
 
-    print("========== DELETE CHICK ==========")
-    print("REQUEST METHOD:", request.method)
-    print("CHICK ID:", id)
-
     chick = ChickBatch.query.get_or_404(id)
 
+    batch_number = chick.batch_number
+
     try:
+
+        # FeedRecord entries are automatically deleted because
+        # ChickBatch.feed_records uses cascade="all, delete-orphan"
         db.session.delete(chick)
+
         db.session.commit()
 
-        print("DELETE COMMITTED SUCCESSFULLY")
-
         flash(
-            f"Chick batch {chick.batch_number} deleted successfully.",
+            f"Chick batch {batch_number} deleted successfully.",
             "success"
         )
 
@@ -2182,16 +2238,194 @@ def delete_chick(id):
 
         db.session.rollback()
 
-        print("========== DELETE ERROR ==========")
-        print(repr(e))
-        print("=================================")
+        print("DELETE CHICK ERROR:", repr(e))
 
         flash(
-            f"Delete failed: {str(e)}",
+            "Unable to delete the chick batch.",
             "danger"
         )
 
     return redirect(url_for("chicks"))
+
+
+# =========================================================
+# DELETE EGG RECORD
+# =========================================================
+
+@app.route("/delete-egg/<int:id>", methods=["POST"])
+def delete_egg(id):
+
+    record = Egg.query.get_or_404(id)
+
+    try:
+
+        db.session.delete(record)
+
+        db.session.commit()
+
+        flash(
+            "Egg record deleted successfully.",
+            "success"
+        )
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        print("DELETE EGG ERROR:", repr(e))
+
+        flash(
+            "Unable to delete the egg record.",
+            "danger"
+        )
+
+    return redirect(url_for("eggs"))
+
+
+# =========================================================
+# DELETE FEED
+# =========================================================
+
+@app.route("/delete_feed/<int:id>", methods=["POST"])
+def delete_feed(id):
+
+    feed = Feed.query.get_or_404(id)
+
+    try:
+
+        # A feed bag cannot be deleted if it has feeding history.
+        if feed.records:
+
+            flash(
+                "Cannot delete this feed because it has feeding history.",
+                "danger"
+            )
+
+            return redirect(url_for("feeds"))
+
+        db.session.delete(feed)
+
+        db.session.commit()
+
+        flash(
+            "Feed deleted successfully.",
+            "success"
+        )
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        print("DELETE FEED ERROR:", repr(e))
+
+        flash(
+            "Unable to delete the feed.",
+            "danger"
+        )
+
+    return redirect(url_for("feeds"))
+
+
+# =========================================================
+# DELETE INDIVIDUAL SALE
+# =========================================================
+
+@app.route("/delete-sale/<int:id>", methods=["POST"])
+def delete_sale(id):
+
+    record = Sale.query.get_or_404(id)
+
+    try:
+
+        db.session.delete(record)
+
+        db.session.commit()
+
+        flash(
+            "Sale deleted successfully.",
+            "success"
+        )
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        print("DELETE SALE ERROR:", repr(e))
+
+        flash(
+            "Unable to delete the sale.",
+            "danger"
+        )
+
+    return redirect(url_for("sales"))
+
+
+# =========================================================
+# DELETE CRATE SALE
+# =========================================================
+
+@app.route("/delete-crate-sale/<int:id>", methods=["POST"])
+def delete_crate_sale(id):
+
+    record = CrateSale.query.get_or_404(id)
+
+    try:
+
+        db.session.delete(record)
+
+        db.session.commit()
+
+        flash(
+            "Crate sale deleted successfully.",
+            "success"
+        )
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        print("DELETE CRATE SALE ERROR:", repr(e))
+
+        flash(
+            "Unable to delete the crate sale.",
+            "danger"
+        )
+
+    return redirect(url_for("crate_sales"))
+
+
+# =========================================================
+# DELETE REMINDER
+# =========================================================
+
+@app.route("/delete_reminder/<int:id>", methods=["POST"])
+def delete_reminder(id):
+
+    reminder = Reminder.query.get_or_404(id)
+
+    try:
+
+        db.session.delete(reminder)
+
+        db.session.commit()
+
+        flash(
+            "Reminder deleted successfully.",
+            "success"
+        )
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        print("DELETE REMINDER ERROR:", repr(e))
+
+        flash(
+            "Unable to delete the reminder.",
+            "danger"
+        )
+
+    return redirect(url_for("reminders"))
 
 @app.route("/notifications")
 def notifications():
