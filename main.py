@@ -1458,23 +1458,21 @@ def inventory():
 @app.route("/chicks")
 def chicks():
 
-    search = request.args.get("search", "").strip()
-    status = request.args.get("status", "").strip()
+    search = request.args.get("search", "")
+    status = request.args.get("status", "")
 
     query = ChickBatch.query
 
     if search:
-
         query = query.filter(
             db.or_(
-                ChickBatch.batch_number.ilike(f"%{search}%"),
-                ChickBatch.breed.ilike(f"%{search}%"),
-                ChickBatch.supplier.ilike(f"%{search}%")
+                ChickBatch.batch_number.contains(search),
+                ChickBatch.breed.contains(search),
+                ChickBatch.supplier.contains(search)
             )
         )
 
     if status:
-
         query = query.filter(
             ChickBatch.status == status
         )
@@ -1520,7 +1518,7 @@ def chicks():
         alive=alive,
         dead=dead,
         sold=sold,
-        today=date.today()
+        today=date.today(),
     )
 
 @app.route("/chick-details/<int:id>")
