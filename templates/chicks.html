@@ -1178,7 +1178,7 @@
     method="POST"
     action="{{ url_for('delete_chick', id=b.id) }}"
     class="delete-form"
-    onsubmit="return confirm('Are you sure you want to delete batch {{ b.batch_number }}?');"
+    onsubmit="console.log('DELETE BUTTON CLICKED - ID:', {{ b.id }}); return confirm('Delete {{ b.batch_number }}?');"
 >
     <button
         type="submit"
