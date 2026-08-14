@@ -2160,10 +2160,19 @@ def add_chick():
 
 @app.route("/delete-chick/<int:id>", methods=["POST"])
 def delete_chick(id):
+
+    print("========== DELETE CHICK ==========")
+    print("ID:", id)
+    print("METHOD:", request.method)
+
     chick = ChickBatch.query.get_or_404(id)
+
+    print("FOUND BATCH:", chick.batch_number)
 
     db.session.delete(chick)
     db.session.commit()
+
+    print("DELETE SUCCESSFUL")
 
     flash("Chick batch deleted successfully.", "success")
 
