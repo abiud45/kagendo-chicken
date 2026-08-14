@@ -2158,26 +2158,27 @@ def add_chick():
     return page("Add Chick Batch", body)
 
 
-@app.route("/delete-chick/<int:id>", methods=["POST"])
+@app.route("/delete_chick/<int:id>", methods=["POST"])
 def delete_chick(id):
-
-    print("========== DELETE CHICK ==========")
-    print("ID:", id)
-    print("METHOD:", request.method)
-
     chick = ChickBatch.query.get_or_404(id)
 
-    print("FOUND BATCH:", chick.batch_number)
+    try:
+        db.session.delete(chick)
+        db.session.commit()
 
-    db.session.delete(chick)
-    db.session.commit()
+        flash("Chick batch deleted successfully.", "success")
 
-    print("DELETE SUCCESSFUL")
+    except Exception as e:
+        db.session.rollback()
 
-    flash("Chick batch deleted successfully.", "success")
+        print("DELETE CHICK ERROR:", e)
+
+        flash(
+            "Unable to delete this chick batch.",
+            "danger"
+        )
 
     return redirect(url_for("chicks"))
-
 
 @app.route("/notifications")
 def notifications():
