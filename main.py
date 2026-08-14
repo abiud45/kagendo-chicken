@@ -910,6 +910,16 @@ def eggs():
         Egg.id.desc()
     ).all()
 
+    sales_rows = Sale.query.order_by(
+        Sale.record_date.desc(),
+        Sale.id.desc()
+    ).all()
+
+    crate_sales_rows = CrateSale.query.order_by(
+        CrateSale.sale_date.desc(),
+        CrateSale.id.desc()
+    ).all()
+
     adjustments = EggAdjustment.query.order_by(
         EggAdjustment.record_date.desc(),
         EggAdjustment.id.desc()
@@ -973,6 +983,16 @@ def eggs():
         if a.record_date == date.today()
     )
 
+    sales_rows = Sale.query.order_by(
+        Sale.record_date.desc(),
+        Sale.id.desc()
+    ).all()
+
+    crate_sales_rows = CrateSale.query.order_by(
+        CrateSale.sale_date.desc(),
+        CrateSale.id.desc()
+    ).all()
+
     return page(
         "Eggs",
         "eggs.html",
@@ -991,7 +1011,10 @@ def eggs():
 
         eggs_sold=eggs_sold,
         collection_today=collection_today,
-        adjustments_today=adjustments_today
+        adjustments_today=adjustments_today,
+
+        sales_rows=sales_rows,
+        crate_sales_rows=crate_sales_rows
     )
 
 
