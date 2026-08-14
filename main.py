@@ -1525,19 +1525,38 @@ def chicks():
     ).all()
 
     for b in batches:
+
         b.feed_used = sum(
-            r.quantity or 0 for r in b.feed_records
+            r.quantity or 0
+            for r in b.feed_records
         )
 
         b.feed_cost = sum(
-            r.cost or 0 for r in b.feed_records
+            r.cost or 0
+            for r in b.feed_records
         )
 
-    total = sum(x.quantity for x in batches)
+        # Current birds remaining in this batch
+        b.alive = (
+            (b.quantity or 0)
+            - (b.dead or 0)
+            - (b.sold or 0)
+        )
 
-    dead = sum(x.dead or 0 for x in batches)
+    total = sum(
+        x.quantity or 0
+        for x in batches
+    )
 
-    sold = sum(x.sold or 0 for x in batches)
+    dead = sum(
+        x.dead or 0
+        for x in batches
+    )
+
+    sold = sum(
+        x.sold or 0
+        for x in batches
+    )
 
     alive = total - dead - sold
 
@@ -1550,7 +1569,59 @@ def chicks():
         dead=dead,
         sold=sold,
         today=date.today(),
+    )
 
+@app.route("/chick-details/<int:id>")
+def chick_details(id):
+
+    batch = ChickBatch.query.get_or_404(id)
+
+    # Feed totals
+    feed_used = sum(
+        r.quantity or 0
+        for r in batch.feed_records
+    )
+
+    feed_cost = sum(
+        r.cost or 0
+        for r in batch.feed_records
+    )
+
+    # Bird totals
+    quantity = batch.quantity or 0
+    dead = batch.dead or 0
+    sold = batch.sold or 0
+
+    alive = quantity - dead - sold
+
+    # Survival percentage
+    survival_rate = (
+        (alive / quantity) * 100
+        if quantity else 0
+    )
+
+    # Batch age
+    age_days = (
+        date.today() - batch.purchase_date
+    ).days
+
+    return page(
+        f"Chick Batch {batch.batch_number}",
+        "chick_details.html",
+
+        batch=batch,
+
+        feed_used=feed_used,
+        feed_cost=feed_cost,
+
+        alive=alive,
+        dead=dead,
+        sold=sold,
+
+        survival_rate=survival_rate,
+        age_days=age_days,
+
+        today=date.today()
     )
 
 
